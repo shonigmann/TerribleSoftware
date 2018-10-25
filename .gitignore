@@ -28,9 +28,5 @@ report/*.log
 report/*.aux
 report/*.gz
 
-#Anything within /bin
-bin/*
-
 # History of the last run
 history.xml
-/bin/
