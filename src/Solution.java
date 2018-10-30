@@ -7,9 +7,9 @@ import logist.simulation.Vehicle;
 public class Solution {
 	private HashMap<Vehicle, ArrayList<Action>> vehicleAgendas;
 	
-	public Solution(HashMap<Vehicle, ArrayList<Action>> vehicle2Agendas) {
-		this.vehicleAgendas = vehicle2Agendas;
+	public Solution(HashMap<Vehicle, ArrayList<Action>> vehicleAgendas) {
+		this.vehicleAgendas = vehicleAgendas;
 	}
 	
-	//TODO make methods for handy neighbouring solution generation
+	//TODO make methods for handy neighboring solution generation
 }
