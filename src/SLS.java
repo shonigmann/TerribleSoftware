@@ -10,6 +10,7 @@ import logist.topology.Topology.City;
 import logist.plan.Action.Move;
 import logist.plan.Action.Delivery;
 import logist.plan.Action.Pickup;
+import logist.plan.Plan;
 
 public class SLS {
 	private final long startTime;
