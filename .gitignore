@@ -30,3 +30,6 @@ doc/*.gz
 
 # History of the last run
 history.xml
+
+#no bin
+bin/*
