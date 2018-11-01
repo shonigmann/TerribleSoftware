@@ -21,10 +21,13 @@ public class SLS {
 		this.startTime = System.currentTimeMillis();
 		this.solution = selectInitialSolution(vehicles, tasks);
 		this.currentTime = System.currentTimeMillis();
-
-		while (this.currentTime - this.startTime < timeLimit) { //TODO make sure this timing works for edge cases
-			//TODO Arthur
-
+		
+		Solution solution = selectInitialSolution(vehicles, tasks);
+		while (this.currentTime - this.startTime < timeLimit) { //TODO make sure this timing works for edge cases (what about stopping slightly before)
+			Solution oldSolution = solution;
+			ArrayList<Solution> neighbours = this.chooseNeighbours();
+			solution = this.localChoice(neighbours);
+			
 			this.currentTime = System.currentTimeMillis();
 		}
 	}
