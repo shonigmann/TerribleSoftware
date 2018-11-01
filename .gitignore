@@ -24,9 +24,9 @@ hs_err_pid*
 
 # Only push the report .tex, pdf and pics
 
-report/*.log
-report/*.aux
-report/*.gz
+doc/*.log
+doc/*.aux
+doc/*.gz
 
 # History of the last run
 history.xml
