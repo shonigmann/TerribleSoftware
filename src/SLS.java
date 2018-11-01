@@ -39,6 +39,18 @@ public class SLS {
 	public Solution getSolution() {
 		return this.solution;
 	}
+	
+	/**
+	 * Randomly choose a vehicle (A) out of the vehicles contained in solution.
+	 * Choose another vehicle. Add the first Pickup of the vehicle (A) in front of the other vehicle. 
+	 * Randomly choose places to put the corresponding delivery.
+	 * Do this for all vehicles.
+	 * @param solution
+	 * @return a list of the generated solutions
+	 */
+	private ArrayList<Solution> swapFirstPickup(Solution solution) {
+		//TODO Arthur
+	}
 
 	// TODO Simon
 	private Solution selectInitialSolution(List<Vehicle> vehicles, TaskSet tasks) {
@@ -120,7 +132,7 @@ public class SLS {
 	private ArrayList<Solution> chooseNeighbours() {
 		return null;
 	}
-
+	
 	/**
 	 * 
 	 * @param solutions
