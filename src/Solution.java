@@ -8,7 +8,6 @@ import logist.plan.Action.Move;
 import logist.plan.Action.Pickup;
 import logist.plan.Plan;
 import logist.simulation.Vehicle;
-import logist.task.Task;
 import logist.topology.Topology.City;
 
 public class Solution {
@@ -50,9 +49,15 @@ public class Solution {
 		//Generate complete vehicle task lists from simplified version
 		for(Vehicle vehicle : this.vehicles){
 			ArrayList<TaskWrapper> simpleTaskList = simpleVehicleAgendas.get(vehicle);
+			City origin = vehicle.getCurrentCity(); //TODO: set origin city
 			for(TaskWrapper task : simpleTaskList){
-				City origin; //TODO: set origin city
-				completeVehicleAgenda.get(vehicle).addAll(getTaskActions(origin,task));
+				if(completeVehicleAgenda.containsKey(vehicle)){
+					completeVehicleAgenda.get(vehicle).addAll(getTaskActions(origin,task));	
+				}
+				else{
+					completeVehicleAgenda.put(vehicle,getTaskActions(origin,task));		
+				}
+				origin = task.getEndCity();
 			}
 		}
 		
@@ -62,15 +67,21 @@ public class Solution {
 	private ArrayList<Action> getTaskActions(City origin, TaskWrapper task) {
 
 		ArrayList<Action> actions = new ArrayList<Action>();
-		ArrayList<City> pathCities = (ArrayList<City>) origin.pathTo(task.deliveryCity);
+		ArrayList<City> pathCities = (ArrayList<City>) origin.pathTo(task.getEndCity());
 
-		actions.add(new Pickup(task));
-
+		//first add actions for movement from vehicle's current location to target city
 		for (City pathCity : pathCities) {
 			actions.add(new Move(pathCity));
 		}
 
-		actions.add(new Delivery(task));
+		//then add action for specific task component
+		if(task.isPickup()){
+			actions.add(new Pickup(task.getTask()));
+		}
+		else{
+			actions.add(new Delivery(task.getTask()));	
+		}
+		
 		return actions;
 	}
 

@@ -2,15 +2,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import logist.plan.Action;
 import logist.simulation.Vehicle;
 import logist.task.Task;
 import logist.task.TaskSet;
 import logist.topology.Topology.City;
-import logist.plan.Action.Move;
-import logist.plan.Action.Delivery;
-import logist.plan.Action.Pickup;
-import logist.plan.Plan;
 
 public class SLS {
 	private final long startTime;
@@ -28,9 +23,9 @@ public class SLS {
 				
 		Solution solution = selectInitialSolution(vehicles, tasks);
 		while (this.currentTime - this.startTime < timeLimit) { //TODO make sure this timing works for edge cases (what about stopping slightly before)
-			Solution oldSolution = solution;
-			ArrayList<Solution> neighbours = this.chooseNeighbours();
-			solution = this.localChoice(neighbours);
+			Solution oldSolution = solution; //TODO: why is oldSolution never used? Maybe pass it into oldSolution? or does neighbors contain the original? 
+			ArrayList<Solution> neighbors = this.chooseNeighbours();
+			solution = this.localChoice(neighbors);
 			
 			this.currentTime = System.currentTimeMillis();
 		}
@@ -50,6 +45,8 @@ public class SLS {
 	 */
 	private ArrayList<Solution> swapFirstPickup(Solution solution) {
 		//TODO Arthur
+		ArrayList<Solution> solutions = new ArrayList<Solution>();
+		return solutions;
 	}
 
 	// TODO Simon

@@ -32,4 +32,17 @@ public class TaskWrapper {
 	public boolean isPickup() {
 		return this.pickup;
 	}
+	
+	public City getEndCity(){
+		City city;
+		if (pickup){
+			//if the task is a pickup, vehicle ends up in the task's pickup city
+			city = task.deliveryCity; 		
+			}
+		else{
+			//else, vehicle ends up in the task's delivery city
+			city = task.pickupCity;
+		}
+		return city;
+	}
 }
