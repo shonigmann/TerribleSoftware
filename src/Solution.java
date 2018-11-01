@@ -14,6 +14,10 @@ public class Solution {
 	}
 	
 	//TODO make methods for handy neighboring solution generation
+
+	public HashMap<Vehicle,ArrayList<Action>> getVehicleAgendas(){
+		return vehicleAgendas;
+	}
 	
 	/**
 	 * 

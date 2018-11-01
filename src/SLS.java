@@ -22,6 +22,10 @@ public class SLS {
 		this.solution = selectInitialSolution(vehicles, tasks);
 		this.currentTime = System.currentTimeMillis();
 		
+
+		//Discount the timelimit to ensure that a solution is returned
+		timeLimit = timeLimit*(long)0.9;
+				
 		Solution solution = selectInitialSolution(vehicles, tasks);
 		while (this.currentTime - this.startTime < timeLimit) { //TODO make sure this timing works for edge cases (what about stopping slightly before)
 			Solution oldSolution = solution;
@@ -32,7 +36,7 @@ public class SLS {
 		}
 	}
 
-	private Solution getSolution() {
+	public Solution getSolution() {
 		return this.solution;
 	}
 
@@ -102,7 +106,7 @@ public class SLS {
 					for(Task testTask : workingTaskList){
 						if(testTask.pickupCity == vehicleCities.get(vehicle)){
 							canChain = true;
-							taskIndex = workingTaskList.indexOf(task);
+							taskIndex = workingTaskList.indexOf(testTask);
 							break; //only take the first task satisfying the criteria
 						}
 					}					
