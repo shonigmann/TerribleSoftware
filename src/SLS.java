@@ -23,7 +23,7 @@ public class SLS {
 		this.currentTime = System.currentTimeMillis();
 		
 
-		//Discount the timelimit to ensure that a solution is returned
+		//Discount the time limit to ensure that a solution is returned
 		timeLimit = timeLimit*(long)0.9;
 				
 		Solution solution = selectInitialSolution(vehicles, tasks);
@@ -60,7 +60,7 @@ public class SLS {
 		}
 
 		//stores the action of the vehicle
-		HashMap<Vehicle, ArrayList<Action>> vehicleAgendas = new HashMap<Vehicle, ArrayList<Action>>(); 
+		HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas = new HashMap<Vehicle, ArrayList<Action>>(); 
 		
 		//stores the location of the vehicle after the most recent action
 		HashMap<Vehicle, City> vehicleCities = new HashMap<Vehicle, City>(); 
@@ -85,17 +85,19 @@ public class SLS {
 					
 					Task task = workingTaskList.get(taskIndex);
 
-					if (vehicleAgendas.containsKey(vehicle)) {
-						// add actions required to deliver task to agenda
-						City currentCity = vehicleCities.get(vehicle);
+					ArrayList<TaskWrapper> tasks = new ArrayList<TaskWrapper>();
+					tasks.add(new TaskWrapper(task,true));//pickup
+					tasks.add(new TaskWrapper(task,false));//delivery
+					
+					if (simpleVehicleAgendas.containsKey(vehicle)) {
 						// if vehicle key already exists, append actions to
 						// current list
-						vehicleAgendas.get(vehicle).addAll(getDeliveryActions(currentCity, task));
-					} else {
+						simpleVehicleAgendas.get(vehicle).addAll(tasks);
+
+						} else {
 						// if key doesn't exist yet, initialize with a new
 						// arrayList
-						City currentCity = vehicle.homeCity();
-						vehicleAgendas.put(vehicle, getDeliveryActions(currentCity, task));
+						simpleVehicleAgendas.put(vehicle, tasks);
 					}
 
 					vehicleCities.put(vehicle, task.deliveryCity);
@@ -113,7 +115,7 @@ public class SLS {
 				}
 			}
 		}		
-		return new Solution(vehicleAgendas);
+		return new Solution(vehicles,simpleVehicleAgendas);
 	}
 
 	// TODO Simon
@@ -142,19 +144,6 @@ public class SLS {
 		return optimalSolution;
 	}
 
-	private ArrayList<Action> getDeliveryActions(City origin, Task task) {
 
-		ArrayList<Action> actions = new ArrayList<Action>();
-		ArrayList<City> pathCities = (ArrayList<City>) origin.pathTo(task.deliveryCity);
-
-		actions.add(new Pickup(task));
-
-		for (City pathCity : pathCities) {
-			actions.add(new Move(pathCity));
-		}
-
-		actions.add(new Delivery(task));
-		return actions;
-	}
 
 }
