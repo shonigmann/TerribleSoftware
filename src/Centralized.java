@@ -1,5 +1,6 @@
 //the list of imports
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import logist.LogistSettings;
@@ -10,6 +11,7 @@ import logist.behavior.CentralizedBehavior;
 import logist.agent.Agent;
 import logist.config.Parsers;
 import logist.simulation.Vehicle;
+import logist.plan.Action;
 import logist.plan.Plan;
 import logist.task.Task;
 import logist.task.TaskDistribution;
@@ -59,14 +61,23 @@ public class Centralized implements CentralizedBehavior {
         long time_start = System.currentTimeMillis();
         
 //		System.out.println("Agent " + agent.id() + " has tasks " + tasks);
-        Plan planVehicle1 = naivePlan(vehicles.get(0), tasks);
-
-        List<Plan> plans = new ArrayList<Plan>();
-        plans.add(planVehicle1);
-        while (plans.size() < vehicles.size()) {
-            plans.add(Plan.EMPTY);
-        }
+        SLS sls = new SLS(vehicles, tasks, this.timeout_plan);
+        Solution solution = sls.getSolution();
         
+        List<Plan> plans = new ArrayList<Plan>();
+    	HashMap<Vehicle,ArrayList<Action>> vehicleAgenda = solution.getVehicleAgendas();
+        
+        for(Vehicle vehicle : vehicles){
+        	ArrayList<Action> actionList = vehicleAgenda.get(vehicle);
+        	if(actionList == null){
+        		plans.add(Plan.EMPTY);
+        	}
+        	else {
+            	Plan plan = new Plan(vehicle.getCurrentCity(),vehicleAgenda.get(vehicle));
+            	plans.add(plan);	
+        	}
+        }
+                
         long time_end = System.currentTimeMillis();
         long duration = time_end - time_start;
         System.out.println("The plan was generated in "+duration+" milliseconds.");
