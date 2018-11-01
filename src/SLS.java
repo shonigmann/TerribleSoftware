@@ -60,7 +60,7 @@ public class SLS {
 		}
 
 		//stores the action of the vehicle
-		HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas = new HashMap<Vehicle, ArrayList<Action>>(); 
+		HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas = new HashMap<Vehicle, ArrayList<TaskWrapper>>(); 
 		
 		//stores the location of the vehicle after the most recent action
 		HashMap<Vehicle, City> vehicleCities = new HashMap<Vehicle, City>(); 
@@ -85,19 +85,19 @@ public class SLS {
 					
 					Task task = workingTaskList.get(taskIndex);
 
-					ArrayList<TaskWrapper> tasks = new ArrayList<TaskWrapper>();
-					tasks.add(new TaskWrapper(task,true));//pickup
-					tasks.add(new TaskWrapper(task,false));//delivery
+					ArrayList<TaskWrapper> taskWrappers = new ArrayList<TaskWrapper>();
+					taskWrappers.add(new TaskWrapper(task,true));//pickup
+					taskWrappers.add(new TaskWrapper(task,false));//delivery
 					
 					if (simpleVehicleAgendas.containsKey(vehicle)) {
 						// if vehicle key already exists, append actions to
 						// current list
-						simpleVehicleAgendas.get(vehicle).addAll(tasks);
+						simpleVehicleAgendas.get(vehicle).addAll(taskWrappers);
 
 						} else {
 						// if key doesn't exist yet, initialize with a new
 						// arrayList
-						simpleVehicleAgendas.put(vehicle, tasks);
+						simpleVehicleAgendas.put(vehicle, taskWrappers);
 					}
 
 					vehicleCities.put(vehicle, task.deliveryCity);
