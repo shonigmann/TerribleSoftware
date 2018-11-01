@@ -22,8 +22,8 @@ public class SLS {
 		this.solution = selectInitialSolution(vehicles, tasks);
 		this.currentTime = System.currentTimeMillis();
 
-		while (this.currentTime - this.startTime < timeLimit) {
-			// TODO Arthur
+		while (this.currentTime - this.startTime < timeLimit) { //TODO make sure this timing works for edge cases
+			//TODO Arthur
 
 			this.currentTime = System.currentTimeMillis();
 		}
@@ -114,9 +114,25 @@ public class SLS {
 		return null;
 	}
 
-	// TODO Arthur
+	/**
+	 * 
+	 * @param solutions
+	 * @return the first solution in *solutions* whose total cost is the lowest amongst the ones presented in *solutions*. 
+	 * If *solutions* is empty, return null
+	 */
 	private Solution localChoice(ArrayList<Solution> solutions) {
-		return null;
+		double optimalSolutionTotalCost = Double.POSITIVE_INFINITY;
+		Solution optimalSolution = null;
+		
+		for (Solution solution : solutions) {
+			double solutionTotalCost = solution.getTotalCost();
+			if (solutionTotalCost < optimalSolutionTotalCost) {
+				optimalSolution = solution;
+				optimalSolutionTotalCost = solutionTotalCost;
+			}
+		}
+		
+		return optimalSolution;
 	}
 
 	private ArrayList<Action> getDeliveryActions(City origin, Task task) {
