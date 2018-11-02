@@ -34,5 +34,5 @@ history.xml
 #no bin
 bin/*
 
-#no .classpath
 .classpath
+
