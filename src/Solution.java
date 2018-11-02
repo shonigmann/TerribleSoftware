@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import logist.plan.Action;
@@ -8,17 +9,20 @@ import logist.plan.Action.Move;
 import logist.plan.Action.Pickup;
 import logist.plan.Plan;
 import logist.simulation.Vehicle;
+import logist.task.Task;
 import logist.topology.Topology.City;
 
 public class Solution {
 	private final HashMap<Vehicle, ArrayList<Action>> vehicleAgendas;
 	private final HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas;
 	private final List<Vehicle> vehicles;
+	public final double totalCost;
 	
 	public Solution(List<Vehicle> vehicles, HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) { //Why do you pass two arguments here ?
 		this.simpleVehicleAgendas = simpleVehicleAgendas;
 		this.vehicles = vehicles;
 		this.vehicleAgendas = generateCompleteTaskList();
+		this.totalCost = this.getTotalCost();
 	}
 	
 	public Solution(HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
@@ -27,6 +31,7 @@ public class Solution {
 		vehicles.addAll(simpleVehicleAgendas.keySet());
 		this.vehicles = vehicles;
 		this.vehicleAgendas = generateCompleteTaskList();
+		this.totalCost = this.getTotalCost();
 	}
 	
 	//TODO make methods for handy neighboring solution generation
@@ -47,7 +52,7 @@ public class Solution {
 	 * 
 	 * @return the total cost of this solution
 	 */
-	public double getTotalCost() {
+	private double getTotalCost() {
 		double totalCostOfThisSolution = 0;
 		for (Vehicle vehicle : this.vehicleAgendas.keySet()) {
 			double totalDistanceOfThisVehicle = 0;
@@ -107,6 +112,14 @@ public class Solution {
 		}
 		
 		return actions;
+	}
+	
+	public HashSet<Task> getTasks(Vehicle vehicle) {
+		HashSet<Task> tasksOfThisVehicle = new HashSet<Task>();
+		for (TaskWrapper taskWrapper : this.simpleVehicleAgendas.get(vehicle)) {
+			tasksOfThisVehicle.add(taskWrapper.getTask());
+		}
+		return tasksOfThisVehicle;
 	}
 
 }
