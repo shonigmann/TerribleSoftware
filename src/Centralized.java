@@ -66,15 +66,21 @@ public class Centralized implements CentralizedBehavior {
         Solution solution = sls.getSolution();
         
         List<Plan> plans = new ArrayList<Plan>();
-    	HashMap<Vehicle,ArrayList<Action>> vehicleAgenda = solution.getVehicleAgendas();
+    	HashMap<Vehicle,ArrayList<Action>> vehicleAgendas = solution.getVehicleAgendas();
         
+    	// DEBUG
+    	Vehicle chosenVehicle = vehicles.get(0);
+    	ArrayList<Solution> solutions = sls.transferFirstTask(chosenVehicle, solution.getSimpleVehicleAgendas());
+    	System.out.println("Aa");
+    	// 
+    	
         for(Vehicle vehicle : vehicles){
-        	ArrayList<Action> actionList = vehicleAgenda.get(vehicle);
+        	ArrayList<Action> actionList = vehicleAgendas.get(vehicle);
         	if(actionList == null){
         		plans.add(Plan.EMPTY);
         	}
         	else {
-            	Plan plan = new Plan(vehicle.getCurrentCity(),vehicleAgenda.get(vehicle));
+            	Plan plan = new Plan(vehicle.getCurrentCity(),vehicleAgendas.get(vehicle));
             	plans.add(plan);	
         	}
         }

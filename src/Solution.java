@@ -15,8 +15,16 @@ public class Solution {
 	private final HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas;
 	private final List<Vehicle> vehicles;
 	
-	public Solution(List<Vehicle> vehicles, HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
+	public Solution(List<Vehicle> vehicles, HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) { //Why do you pass two arguments here ?
 		this.simpleVehicleAgendas = simpleVehicleAgendas;
+		this.vehicles = vehicles;
+		this.vehicleAgendas = generateCompleteTaskList();
+	}
+	
+	public Solution(HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
+		this.simpleVehicleAgendas = simpleVehicleAgendas;
+		ArrayList<Vehicle> vehicles = new ArrayList<Vehicle>();
+		vehicles.addAll(simpleVehicleAgendas.keySet());
 		this.vehicles = vehicles;
 		this.vehicleAgendas = generateCompleteTaskList();
 	}
