@@ -41,10 +41,13 @@ public class SLS {
 	}
 
 	/**
+	 * Take the first task that the vehicle will handle, and swap its positions (pickup and delivery) 
+	 * with the positions of all the other tasks that this vehicle will handle.
+	 * For each swap, create a new solution.
 	 * The old solution is not in the generated bunch
 	 * @param vehicle
 	 * @param simpleVehicleAgendas
-	 * @return
+	 * @return a list of solutions with the corresponding swap. Each solution is ONE swap.
 	 */
 	public ArrayList<Solution> swapFirstTask(Vehicle vehicle,
 			HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
@@ -73,6 +76,14 @@ public class SLS {
 
 	}
 
+	/**
+	 * Swap the positions of the taskA (pickup and delivery) with the ones of the taskB (pickup and delivery) in the vehicle's agenda
+	 * @param vehicle
+	 * @param taskA
+	 * @param taskB
+	 * @param simpleVehicleAgendas
+	 * @return a Solution with the corresponding swap
+	 */
 	public Solution swapTwoTasks(Vehicle vehicle, Task taskA, Task taskB,
 			HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
 		assert simpleVehicleAgendas.containsKey(vehicle);
@@ -132,10 +143,14 @@ public class SLS {
 	}
 
 	/**
+	 * Transfer the first task that choseVehicle will handle to all the other vehicles.
+	 * The pickup part of the task is put at the front of the other vehicle's agenda.
+	 * Additionally, the delivery part of the task is put at every places in can (directly after the pickup, then slightly after, and so on)
+	 * Each transfer corresponds to one solution.
 	 * The old solution is not in the generated bunch
 	 * @param chosenVehicle
 	 * @param simpleVehicleAgendas
-	 * @return
+	 * @return a list with all the solutions newly generated
 	 */
 	public ArrayList<Solution> transferFirstTask(Vehicle chosenVehicle,
 			HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
