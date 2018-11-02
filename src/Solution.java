@@ -30,7 +30,9 @@ public class Solution {
 	}
 	
 	//TODO make methods for handy neighboring solution generation
-
+	public ArrayList<Vehicle> getVehicles() {
+		return new ArrayList<Vehicle>(this.vehicles);
+	}
 	
 	public HashMap<Vehicle,ArrayList<TaskWrapper>> getSimpleVehicleAgendas(){
 		return this.simpleVehicleAgendas;
@@ -48,8 +50,17 @@ public class Solution {
 	public double getTotalCost() {
 		double totalCostOfThisSolution = 0;
 		for (Vehicle vehicle : this.vehicleAgendas.keySet()) {
-			Plan planOfThisVehicle = new Plan(vehicle.getCurrentCity(), this.vehicleAgendas.get(vehicle));
-			double totalCostOfThisVehicle = planOfThisVehicle.totalDistance() * vehicle.costPerKm();
+			double totalDistanceOfThisVehicle = 0;
+			
+			City fromCity = vehicle.getCurrentCity();
+
+			for (int i = 0;i < this.simpleVehicleAgendas.get(vehicle).size() - 1;i++) {
+				City toCity = this.simpleVehicleAgendas.get(vehicle).get(i).getEndCity();
+				totalDistanceOfThisVehicle += fromCity.distanceTo(toCity);
+				fromCity = toCity;
+			}
+			
+			double totalCostOfThisVehicle = totalDistanceOfThisVehicle * vehicle.costPerKm();
 			totalCostOfThisSolution += totalCostOfThisVehicle;
 		}
 		return totalCostOfThisSolution;

@@ -19,18 +19,20 @@ public class SLS {
 		this.currentTime = System.currentTimeMillis();
 
 		// Discount the time limit to ensure that a solution is returned
-		timeLimit = timeLimit * (long) 0.9;
+		timeLimit -= 500; // The other way didn't work somehow
 
 		Solution solution = selectInitialSolution(vehicles, tasks);
-//		while (this.currentTime - this.startTime < timeLimit) { // TODO make sure this timing works for edge cases (what
-//																// about stopping slightly before)
-//			Solution oldSolution = solution; // TODO: why is oldSolution never used? Maybe pass it into oldSolution? or
-//												// does neighbors contain the original?
-//			ArrayList<Solution> neighbors = this.chooseNeighbours();
-//			solution = this.localChoice(neighbors);
-//
-//			this.currentTime = System.currentTimeMillis();
-//		}
+		double diffTime = this.currentTime - this.startTime;
+		System.out.println("The time limit is " + timeLimit);
+		while (diffTime < timeLimit) { // TODO make sure this timing works for edge cases (what
+																// about stopping slightly before)
+			Solution oldSolution = solution;
+			ArrayList<Solution> neighbors = this.chooseNeighbours(oldSolution);
+			solution = this.localChoice(neighbors);
+			
+			diffTime =  System.currentTimeMillis() - this.startTime;
+		}
+		System.out.println("SLS constructed");
 	}
 
 	public Solution getSolution() {
@@ -42,54 +44,63 @@ public class SLS {
 	 * @param simpleVehicleAgendas
 	 * @return
 	 */
-	public ArrayList<Solution> transferFirstTask(Vehicle chosenVehicle, HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
-		ArrayList<Solution> solutions = new ArrayList<Solution>();
+	public ArrayList<Solution> transferFirstTask(Vehicle chosenVehicle,
+			HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
 
+		ArrayList<Solution> solutions = new ArrayList<Solution>();
+		solutions.add(new Solution(simpleVehicleAgendas)); // Add the old solution, so that we avoid bad choices
+
+		
 		// Make sure that chosenVehicle is in simpleVehicleAgendas
 		assert simpleVehicleAgendas.containsKey(chosenVehicle);
 
-		ArrayList<Vehicle> vehicles = new ArrayList<Vehicle>();
-		vehicles.addAll(simpleVehicleAgendas.keySet());
-		vehicles.remove(chosenVehicle);
+		if (!simpleVehicleAgendas.get(chosenVehicle).isEmpty()) {
+			ArrayList<Vehicle> vehicles = new ArrayList<Vehicle>();
+			vehicles.addAll(simpleVehicleAgendas.keySet());
+			vehicles.remove(chosenVehicle);
 
-		// Generate the new simpleVehicleAgenda of the chosenVehicle (after the transer)
-		ArrayList<TaskWrapper> simpleChosenVehicleAgenda = (ArrayList<TaskWrapper>) simpleVehicleAgendas.get(chosenVehicle).clone();
+			// Generate the new simpleVehicleAgenda of the chosenVehicle (after the transer)
+			ArrayList<TaskWrapper> simpleChosenVehicleAgenda = (ArrayList<TaskWrapper>) simpleVehicleAgendas
+					.get(chosenVehicle).clone();
 
-		TaskWrapper pickupToTransfer = simpleChosenVehicleAgenda.get(0); // The first TaskWrapper in the chosenVehicle's
-																			// agenda
+			TaskWrapper pickupToTransfer = simpleChosenVehicleAgenda.get(0); // The first TaskWrapper in the chosenVehicle's
+																				// agenda
 
-		// Check
-		assert pickupToTransfer.isPickup();
+			// Check
+			assert pickupToTransfer.isPickup();
 
-		simpleChosenVehicleAgenda.remove(0); // Remove the pickup
+			simpleChosenVehicleAgenda.remove(0); // Remove the pickup
 
-		TaskWrapper deliveryToTransfer = new TaskWrapper(pickupToTransfer.getTask(), false);
-		simpleChosenVehicleAgenda.remove(deliveryToTransfer);
+			TaskWrapper deliveryToTransfer = new TaskWrapper(pickupToTransfer.getTask(), false);
+			simpleChosenVehicleAgenda.remove(deliveryToTransfer);
 
-		// make sure we got rid of the pickup and delivery
-		assert simpleChosenVehicleAgenda.size() - 2 == simpleVehicleAgendas.get(chosenVehicle).size();
+			// make sure we got rid of the pickup and delivery
+			assert simpleChosenVehicleAgenda.size() - 2 == simpleVehicleAgendas.get(chosenVehicle).size();
 
-		for (Vehicle vehicle : vehicles) {
+			for (Vehicle vehicle : vehicles) {
 
-			ArrayList<TaskWrapper> tempSimpleVehicleAgenda = (ArrayList<TaskWrapper>) simpleVehicleAgendas.get(vehicle).clone();
-			tempSimpleVehicleAgenda.add(0, pickupToTransfer);
+				ArrayList<TaskWrapper> tempSimpleVehicleAgenda = (ArrayList<TaskWrapper>) simpleVehicleAgendas.get(vehicle)
+						.clone();
+				tempSimpleVehicleAgenda.add(0, pickupToTransfer);
 
-			// Create one solution per place where you can append the delivery
-			for (int i = 1; i < tempSimpleVehicleAgenda.size(); i++) {
-				// handle the chosenVehicle
-				HashMap<Vehicle, ArrayList<TaskWrapper>> newSimpleVehicleAgendas = (HashMap<Vehicle, ArrayList<TaskWrapper>>) simpleVehicleAgendas.clone();
-				newSimpleVehicleAgendas.put(chosenVehicle, simpleChosenVehicleAgenda);
-				
-				// handle the current vehicle
-				ArrayList<TaskWrapper> simpleVehicleAgenda = (ArrayList<TaskWrapper>) tempSimpleVehicleAgenda.clone();
-				simpleVehicleAgenda.add(i, deliveryToTransfer);
-				newSimpleVehicleAgendas.put(vehicle, simpleVehicleAgenda);
-				
-				// create new solution based on the new agendas
-				solutions.add(new Solution(newSimpleVehicleAgendas));
+				// Create one solution per place where you can append the delivery
+				for (int i = 1; i < tempSimpleVehicleAgenda.size(); i++) {
+					// handle the chosenVehicle
+					HashMap<Vehicle, ArrayList<TaskWrapper>> newSimpleVehicleAgendas = (HashMap<Vehicle, ArrayList<TaskWrapper>>) simpleVehicleAgendas
+							.clone();
+					newSimpleVehicleAgendas.put(chosenVehicle, simpleChosenVehicleAgenda);
+
+					// handle the current vehicle
+					ArrayList<TaskWrapper> simpleVehicleAgenda = (ArrayList<TaskWrapper>) tempSimpleVehicleAgenda.clone();
+					simpleVehicleAgenda.add(i, deliveryToTransfer);
+					newSimpleVehicleAgendas.put(vehicle, simpleVehicleAgenda);
+
+					// create new solution based on the new agendas
+					solutions.add(new Solution(newSimpleVehicleAgendas));
+				}
 			}
 		}
-
+		
 		return solutions;
 	}
 
@@ -172,8 +183,16 @@ public class SLS {
 	}
 
 	// TODO Simon
-	private ArrayList<Solution> chooseNeighbours() {
-		return null;
+	private ArrayList<Solution> chooseNeighbours(Solution oldSolution) {
+		// TODO BETTER RANDOM VEHICLE PICKED
+		ArrayList<Solution> solutions = new ArrayList<Solution>();
+		ArrayList<Vehicle> vehicles = oldSolution.getVehicles(); 
+		//Collections.shuffle(vehicles);
+		Vehicle chosenVehicle =  vehicles.get(0);
+		
+		solutions.addAll(
+				this.transferFirstTask(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
+		return solutions;
 	}
 
 	/**
@@ -194,6 +213,8 @@ public class SLS {
 				optimalSolutionTotalCost = solutionTotalCost;
 			}
 		}
+		
+		System.out.println("LOCAL CHOICE COSTS : " + optimalSolutionTotalCost);
 
 		return optimalSolution;
 	}
