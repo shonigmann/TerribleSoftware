@@ -11,19 +11,24 @@ import logist.simulation.Vehicle;
 import logist.topology.Topology.City;
 
 public class Solution {
-	private HashMap<Vehicle, ArrayList<Action>> vehicleAgendas;
-	private HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas;
-	private List<Vehicle> vehicles;
+	private final HashMap<Vehicle, ArrayList<Action>> vehicleAgendas;
+	private final HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas;
+	private final List<Vehicle> vehicles;
 	
 	public Solution(List<Vehicle> vehicles, HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
 		this.simpleVehicleAgendas = simpleVehicleAgendas;
 		this.vehicles = vehicles;
-		generateCompleteTaskList();
-		
+		this.vehicleAgendas = generateCompleteTaskList();
 	}
 	
 	//TODO make methods for handy neighboring solution generation
 
+	
+	public HashMap<Vehicle,ArrayList<TaskWrapper>> getSimpleVehicleAgendas(){
+		return this.simpleVehicleAgendas;
+	}
+	
+	
 	public HashMap<Vehicle,ArrayList<Action>> getVehicleAgendas(){
 		return vehicleAgendas;
 	}
@@ -42,7 +47,7 @@ public class Solution {
 		return totalCostOfThisSolution;
 	}	
 	
-	private void generateCompleteTaskList(){
+	private HashMap<Vehicle, ArrayList<Action>> generateCompleteTaskList(){
 		
 		HashMap<Vehicle,ArrayList<Action>> completeVehicleAgenda = new HashMap<Vehicle,ArrayList<Action>>();
 		
@@ -61,7 +66,7 @@ public class Solution {
 			}
 		}
 		
-		vehicleAgendas = completeVehicleAgenda;
+		return completeVehicleAgenda;
 	}
 	
 	private ArrayList<Action> getTaskActions(City origin, TaskWrapper task) {

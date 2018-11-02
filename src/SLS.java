@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -43,9 +44,29 @@ public class SLS {
 	 * @param solution
 	 * @return a list of the generated solutions
 	 */
-	private ArrayList<Solution> swapFirstPickup(Solution solution) {
+	private ArrayList<Solution> transferFirstPickup(Solution solution) {
 		//TODO Arthur
 		ArrayList<Solution> solutions = new ArrayList<Solution>();
+		
+		//Randomly pick a vehicle
+		ArrayList<Vehicle> vehicles = new ArrayList<Vehicle>();
+		vehicles.addAll(solution.getVehicleAgendas().keySet());
+		Collections.shuffle(vehicles);
+		Vehicle chosenVehicle = vehicles.get(0);
+		vehicles.remove(0);
+		
+		//For all the other, transfer the first pickup task
+		TaskWrapper taskToTransfer = solution.getSimpleVehicleAgendas().get(chosenVehicle).get(0);
+		if (!taskToTransfer.isPickup()) {
+			System.out.println("THE ACTION SHOULD BE A PICK UP");
+		}
+		
+		for (Vehicle vehicle : vehicles) {
+			//Generate solution for each delivery position
+			
+		}
+		
+		
 		return solutions;
 	}
 
