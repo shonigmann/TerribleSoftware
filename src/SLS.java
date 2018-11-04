@@ -3,6 +3,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 
 import logist.simulation.Vehicle;
 import logist.task.Task;
@@ -14,30 +15,49 @@ public class SLS {
 	private long currentTime;
 	private Solution solution;
 
+	private final double P_LOWER = 0.3;
+	private final double P_UPPER = 0.6;
+
 	public SLS(List<Vehicle> vehicles, TaskSet tasks, long timeLimit) {
 		this.startTime = System.currentTimeMillis();
 		this.solution = selectInitialSolution(vehicles, tasks);
 		this.currentTime = System.currentTimeMillis();
 
 		// Discount the time limit to ensure that a solution is returned
-		timeLimit -= 500; // The other way didn't work somehow
+		timeLimit -= 500; // The other way didn't work somehow - non-integer
+							// time maybe?
 
-		int selectInitial = 2;
+		int selectInitial = 3;
 		Solution solution = null;
-		switch(selectInitial){
-		case 1:	solution = selectInitialSolution(vehicles, tasks);
-				break;
-		case 2:	solution = selectInitialSolutionNaive(vehicles, tasks);			
-				break;
+
+		switch (selectInitial) {
+		case 1:
+			solution = selectInitialSolution(vehicles, tasks);
+			break;
+		case 2:
+			solution = selectInitialSolutionNaive(vehicles, tasks);
+			break;
+		case 3:
+			solution = selectInitialSolutionGreedy(vehicles, tasks);
+			break;
 		}
-		
+
+		Solution homeSolution = solution; // stores current solution used to
+											// generate neighbors
+		Solution localMin = solution; // stores the current local minimum
+
 		double diffTime = this.currentTime - this.startTime;
 		System.out.println("The time limit is " + timeLimit);
-		while (diffTime < timeLimit) { // TODO make sure this timing works for edge cases (what
-										// about stopping slightly before)
-			ArrayList<Solution> neighbors = this.chooseNeighbours(solution);
-			neighbors.add(0, solution); // current solution kept in case nothing is better
-			solution = this.localChoice(neighbors);
+		while (diffTime < timeLimit) { // TODO make sure this timing works for
+										// edge cases (what about stopping
+										// slightly before)
+			ArrayList<Solution> neighbors = this.chooseNeighbours(homeSolution);
+			neighbors.add(0, homeSolution); // current solution kept in case
+											// nothing is better
+			localMin = this.getLocalMin(neighbors);// stores the local minimum
+													// from the current set of
+													// neighbors
+			homeSolution = this.localChoice(neighbors, localMin, homeSolution);
 
 			diffTime = System.currentTimeMillis() - this.startTime;
 		}
@@ -49,21 +69,23 @@ public class SLS {
 	}
 
 	/**
-	 * Take the first task that the vehicle will handle, and swap its positions (pickup and delivery) 
-	 * with the positions of all the other tasks that this vehicle will handle.
-	 * For each swap, create a new solution.
-	 * The old solution is not in the generated bunch
+	 * Take the first task that the vehicle will handle, and swap its positions
+	 * (pickup and delivery) with the positions of all the other tasks that this
+	 * vehicle will handle. For each swap, create a new solution. The old
+	 * solution is not in the generated bunch
+	 * 
 	 * @param vehicle
 	 * @param simpleVehicleAgendas
-	 * @return a list of solutions with the corresponding swap. Each solution is ONE swap.
+	 * @return a list of solutions with the corresponding swap. Each solution is
+	 *         ONE swap.
 	 */
-	public ArrayList<Solution> swapFirstTask(Vehicle vehicle,
-			HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
-		
+	public ArrayList<Solution> swapFirstTask(Vehicle vehicle, HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
+
 		assert simpleVehicleAgendas.containsKey(vehicle);
 		ArrayList<Solution> solutions = new ArrayList<Solution>();
 
-		//TODO: is there anything preventing this from swapping a task with itself? 
+		// TODO: is there anything preventing this from swapping a task with
+		// itself?
 		if (!simpleVehicleAgendas.get(vehicle).isEmpty()) {
 			// Find all the tasks that vehicle handles
 			ArrayList<Task> tasks = new ArrayList<Task>();
@@ -83,15 +105,16 @@ public class SLS {
 	}
 
 	/**
-	 * Swap the positions of the taskA (pickup and delivery) with the ones of the taskB (pickup and delivery) in the vehicle's agenda
+	 * Swap the positions of the taskA (pickup and delivery) with the ones of
+	 * the taskB (pickup and delivery) in the vehicle's agenda
+	 * 
 	 * @param vehicle
 	 * @param taskA
 	 * @param taskB
 	 * @param simpleVehicleAgendas
 	 * @return a Solution with the corresponding swap
 	 */
-	public Solution swapTwoTasks(Vehicle vehicle, Task taskA, Task taskB,
-			HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
+	public Solution swapTwoTasks(Vehicle vehicle, Task taskA, Task taskB, HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
 		assert simpleVehicleAgendas.containsKey(vehicle);
 
 		HashSet<Task> tasks = new HashSet<Task>();
@@ -103,8 +126,7 @@ public class SLS {
 
 		/* Swapping */
 		@SuppressWarnings("unchecked")
-		ArrayList<TaskWrapper> newSimpleVehicleAgenda = (ArrayList<TaskWrapper>) simpleVehicleAgendas.get(vehicle)
-				.clone();
+		ArrayList<TaskWrapper> newSimpleVehicleAgenda = (ArrayList<TaskWrapper>) simpleVehicleAgendas.get(vehicle).clone();
 
 		int posPickupTaskA = -1;
 		int posPickupTaskB = -1;
@@ -150,17 +172,18 @@ public class SLS {
 	}
 
 	/**
-	 * Transfer the first task that choseVehicle will handle to all the other vehicles.
-	 * The pickup part of the task is put at the front of the other vehicle's agenda.
-	 * Additionally, the delivery part of the task is put at every places in can (directly after the pickup, then slightly after, and so on)
-	 * Each transfer corresponds to one solution.
-	 * The old solution is not in the generated bunch
+	 * Transfer the first task that choseVehicle will handle to all the other
+	 * vehicles. The pickup part of the task is put at the front of the other
+	 * vehicle's agenda. Additionally, the delivery part of the task is put at
+	 * every places in can (directly after the pickup, then slightly after, and
+	 * so on) Each transfer corresponds to one solution. The old solution is not
+	 * in the generated bunch
+	 * 
 	 * @param chosenVehicle
 	 * @param simpleVehicleAgendas
 	 * @return a list with all the solutions newly generated
 	 */
-	public ArrayList<Solution> transferFirstTask(Vehicle chosenVehicle,
-			HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
+	public ArrayList<Solution> transferFirstTask(Vehicle chosenVehicle, HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
 
 		ArrayList<Solution> solutions = new ArrayList<Solution>();
 
@@ -172,12 +195,16 @@ public class SLS {
 			vehicles.addAll(simpleVehicleAgendas.keySet());
 			vehicles.remove(chosenVehicle);
 
-			// Generate the new simpleVehicleAgenda of the chosenVehicle (after the transfer)
+			// Generate the new simpleVehicleAgenda of the chosenVehicle (after
+			// the transfer)
 			@SuppressWarnings("unchecked")
-			ArrayList<TaskWrapper> simpleChosenVehicleAgenda = (ArrayList<TaskWrapper>) simpleVehicleAgendas
-					.get(chosenVehicle).clone();
+			ArrayList<TaskWrapper> simpleChosenVehicleAgenda = (ArrayList<TaskWrapper>) simpleVehicleAgendas.get(chosenVehicle).clone();
 
-			TaskWrapper pickupToTransfer = simpleChosenVehicleAgenda.get(0); // The first TaskWrapper in the
+			TaskWrapper pickupToTransfer = simpleChosenVehicleAgenda.get(0); // The
+																				// first
+																				// TaskWrapper
+																				// in
+																				// the
 																				// chosenVehicle's
 																				// agenda
 
@@ -195,22 +222,20 @@ public class SLS {
 			for (Vehicle vehicle : vehicles) {
 
 				@SuppressWarnings("unchecked")
-				ArrayList<TaskWrapper> tempSimpleVehicleAgenda = (ArrayList<TaskWrapper>) simpleVehicleAgendas
-						.get(vehicle).clone();
+				ArrayList<TaskWrapper> tempSimpleVehicleAgenda = (ArrayList<TaskWrapper>) simpleVehicleAgendas.get(vehicle).clone();
 				tempSimpleVehicleAgenda.add(0, pickupToTransfer);
 
-				// Create one solution per place where you can append the delivery
+				// Create one solution per place where you can append the
+				// delivery
 				for (int i = 1; i < tempSimpleVehicleAgenda.size(); i++) {
 					// handle the chosenVehicle
 					@SuppressWarnings("unchecked")
-					HashMap<Vehicle, ArrayList<TaskWrapper>> newSimpleVehicleAgendas = (HashMap<Vehicle, ArrayList<TaskWrapper>>) simpleVehicleAgendas
-							.clone();
+					HashMap<Vehicle, ArrayList<TaskWrapper>> newSimpleVehicleAgendas = (HashMap<Vehicle, ArrayList<TaskWrapper>>) simpleVehicleAgendas.clone();
 					newSimpleVehicleAgendas.put(chosenVehicle, simpleChosenVehicleAgenda);
 
 					// handle the current vehicle
 					@SuppressWarnings("unchecked")
-					ArrayList<TaskWrapper> simpleVehicleAgenda = (ArrayList<TaskWrapper>) tempSimpleVehicleAgenda
-							.clone();
+					ArrayList<TaskWrapper> simpleVehicleAgenda = (ArrayList<TaskWrapper>) tempSimpleVehicleAgenda.clone();
 					simpleVehicleAgenda.add(i, deliveryToTransfer);
 					newSimpleVehicleAgendas.put(vehicle, simpleVehicleAgenda);
 
@@ -224,9 +249,9 @@ public class SLS {
 	}
 
 	/*
-	 * Just assign tasks to vehicles one by one, no thinking about it 
+	 * Just assign tasks to vehicles one by one, no thinking about it
 	 */
-	private Solution selectInitialSolutionNaive(List<Vehicle> vehicles, TaskSet tasks){
+	private Solution selectInitialSolutionNaive(List<Vehicle> vehicles, TaskSet tasks) {
 
 		ArrayList<Task> pickupTaskList = new ArrayList<Task>();
 		ArrayList<Task> deliveryTaskList = new ArrayList<Task>();
@@ -237,15 +262,14 @@ public class SLS {
 
 		// stores the action of the vehicle
 		HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas = new HashMap<Vehicle, ArrayList<TaskWrapper>>();
-		
-		while(!pickupTaskList.isEmpty()){
 
-			for(Vehicle vehicle : vehicles){
-				if(pickupTaskList.isEmpty()){
+		while (!pickupTaskList.isEmpty()) {
+
+			for (Vehicle vehicle : vehicles) {
+				if (pickupTaskList.isEmpty()) {
 					break;
 				}
 
-				
 				Task task = pickupTaskList.get(0);
 				ArrayList<TaskWrapper> taskWrappers = new ArrayList<TaskWrapper>();
 				taskWrappers.add(new TaskWrapper(task, true));// pickup
@@ -262,19 +286,23 @@ public class SLS {
 					simpleVehicleAgendas.put(vehicle, taskWrappers);
 				}
 				pickupTaskList.remove(0);
-			}				
+			}
 		}
-		
+
 		return new Solution(simpleVehicleAgendas);
 	}
-	
+
+	/*
+	 * Chain tasks together by assigning single tasks and
+	 */
 	private Solution selectInitialSolution(List<Vehicle> vehicles, TaskSet tasks) {
 
 		/*
-		 * Pseudo code outline here: Trying to be more efficient here. while TaskSet
-		 * contains tasks For vehicle : vehicles: assign head of task list to vehicle
-		 * Repeat: if another task exists at destination city of this task, add next
-		 * task Break if no task exists at destination city end end
+		 * Pseudo code outline here: Trying to be more efficient here. while
+		 * TaskSet contains tasks For vehicle : vehicles: assign head of task
+		 * list to vehicle Repeat: if another task exists at destination city of
+		 * this task, add next task Break if no task exists at destination city
+		 * end end
 		 */
 
 		// Not sure if TaskSet needs to be cloned? I think it does... else can
@@ -329,14 +357,16 @@ public class SLS {
 					vehicleCities.put(vehicle, task.deliveryCity);
 					workingTaskList.remove(taskIndex);
 
-					// see if there is a task that satisfies chaining here. If yes, keep canChain
+					// see if there is a task that satisfies chaining here. If
+					// yes, keep canChain
 					// true
 					canChain = false;
 					for (Task testTask : workingTaskList) {
 						if (testTask.pickupCity == vehicleCities.get(vehicle)) {
 							canChain = true;
 							taskIndex = workingTaskList.indexOf(testTask);
-							break; // only take the first task satisfying the criteria
+							break; // only take the first task satisfying the
+									// criteria
 						}
 					}
 				}
@@ -345,55 +375,131 @@ public class SLS {
 		return new Solution(vehicles, simpleVehicleAgendas);
 	}
 
-	// TODO Simon
+	private Solution selectInitialSolutionGreedy(List<Vehicle> vehicles, TaskSet tasks) {
+
+		ArrayList<Task> pickupTaskList = new ArrayList<Task>();
+		ArrayList<Task> deliveryTaskList = new ArrayList<Task>();
+		// store tasks in a more workable format
+		for (Task task : tasks) {
+			pickupTaskList.add(task);
+		}
+
+		// stores the action of the vehicle
+		HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas = new HashMap<Vehicle, ArrayList<TaskWrapper>>();
+
+		while (!pickupTaskList.isEmpty()) {
+
+			Task task = pickupTaskList.get(0);
+			ArrayList<TaskWrapper> taskWrappers = new ArrayList<TaskWrapper>();
+			taskWrappers.add(new TaskWrapper(task, true));// pickup
+			taskWrappers.add(new TaskWrapper(task, false));// delivery
+
+			if (simpleVehicleAgendas.containsKey(vehicles.get(0))) {
+				// if vehicle key already exists, append actions to
+				// current list
+				simpleVehicleAgendas.get(vehicles.get(0)).addAll(taskWrappers);
+
+			} else {
+				// if key doesn't exist yet, initialize with a new
+				// arrayList
+				simpleVehicleAgendas.put(vehicles.get(0), taskWrappers);
+			}
+			pickupTaskList.remove(0);
+		}
+		
+		//initialize other vehicles in solution with empty array lists
+		for(int i =1; i<vehicles.size();i++){
+			simpleVehicleAgendas.put(vehicles.get(i), new ArrayList<TaskWrapper>());
+		}
+
+		return new Solution(simpleVehicleAgendas);
+	}
+
 	@SuppressWarnings("unchecked")
 	private ArrayList<Solution> chooseNeighbours(Solution oldSolution) {
 		// TODO BETTER RANDOM VEHICLE PICKED
 		ArrayList<Solution> solutions = new ArrayList<Solution>();
 		ArrayList<Vehicle> vehicles = oldSolution.getVehicles();
 		Collections.shuffle(vehicles);
-		
-		for(int i = 1; i<vehicles.size();i++){
-			Vehicle chosenVehicle = vehicles.get(i);
 
-			ArrayList<Solution> vehicleSolutions = new ArrayList<Solution>();
-			ArrayList<Solution> vehicleSolutions2 = new ArrayList<Solution>();
+		//BIG TODO: for some reason when a greedy initial solution is selected (all tasks given sequentially to vehicle 1, there are often no solutions generated...
+		//			this is despite me adding a loop to guarantee that swaps are made for all vehicles... 
+		ArrayList<Solution> vehicleSolutions = new ArrayList<Solution>();
+		for (int i = 1; i < vehicles.size(); i++) {
+			Vehicle chosenVehicle = vehicles.get(i);
 			vehicleSolutions.addAll(this.transferFirstTask(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
 
+			ArrayList<Solution> vehicleSolutions2 = new ArrayList<Solution>();
 			for (Solution s : (ArrayList<Solution>) vehicleSolutions.clone()) {
-				vehicleSolutions2.addAll(this.swapFirstTask(chosenVehicle, s.getSimpleVehicleAgendas())); // TODO MAYBE DO IT DIFFERENTLY
+				vehicleSolutions2.addAll(this.swapFirstTask(chosenVehicle, s.getSimpleVehicleAgendas())); // TODO
 			}
+			solutions.addAll(vehicleSolutions2);
 
 			vehicleSolutions.addAll(this.swapFirstTask(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
-			solutions.addAll(vehicleSolutions);
-			solutions.addAll(vehicleSolutions2);
 		}
-		
+		solutions.addAll(vehicleSolutions);
+
 		return solutions;
 	}
 
 	/**
 	 * 
 	 * @param solutions
-	 * @return the first solution in *solutions* whose total cost is the lowest
-	 *         amongst the ones presented in *solutions*. If *solutions* is empty,
-	 *         return null
+	 * @return the stochastic choice for a solution. Depending on random number
+	 *         generated, can be either the current solution, the optimal from
+	 *         the set of neighbors, or a random solution from the set of
+	 *         neighbors
 	 */
-	private Solution localChoice(ArrayList<Solution> solutions) {
-		double optimalSolutionTotalCost = Double.POSITIVE_INFINITY;
-		Solution optimalSolution = null;
+	private Solution localChoice(ArrayList<Solution> neighbors, Solution localMin, Solution homeSolution) {
+		Random rand = new Random();
+		double x = rand.nextDouble();
+
+		// if random number is less than P_Lower, choose local min from
+		// neighbors
+		if (x < P_LOWER) {
+			return localMin;
+		}
+		// if random number is between P_lower and P_upper, return the old
+		// solution
+		else if (x < P_UPPER) {
+			return homeSolution;
+		}
+		// if the random number is above P_upper, return a random neighbor
+		else {
+			int y = rand.nextInt(neighbors.size());
+			return neighbors.get(y);
+		}
+
+	}
+
+	/**
+	 * 
+	 * @param solutions
+	 * @return the first solution in *solutions* whose total cost is the lowest
+	 *         amongst the ones presented in *solutions*. If *solutions* is
+	 *         empty, return null
+	 */
+	private Solution getLocalMin(ArrayList<Solution> solutions) {
+		double localMinSolutionTotalCost = Double.POSITIVE_INFINITY;
+		Solution localMinSolution = null;
 
 		for (Solution solution : solutions) {
 			double solutionTotalCost = solution.totalCost;
-			if (solutionTotalCost < optimalSolutionTotalCost) {
-				optimalSolution = solution;
-				optimalSolutionTotalCost = solutionTotalCost;
+			if (solutionTotalCost < localMinSolutionTotalCost) {
+				localMinSolution = solution;
+				localMinSolutionTotalCost = solutionTotalCost;
 			}
 		}
 
-		System.out.println("LOCAL CHOICE COSTS : " + optimalSolutionTotalCost+"; Chosen from "+ Integer.toString(solutions.size()) + " possible neighbors");
+		if (localMinSolution.totalCost < this.solution.totalCost) {
+			solution = localMinSolution; // store optimal solution if local min
+											// trumps current optimal. Only
+											// return local min.
+		}
+		System.out.println(
+				"BEST SOLUTION COST: " + this.solution.totalCost + "; LOCAL CHOICE COSTS : " + localMinSolutionTotalCost + "; Chosen from " + Integer.toString(solutions.size()) + " possible neighbors");
 
-		return optimalSolution;
+		return localMinSolution;
 	}
 
 }
