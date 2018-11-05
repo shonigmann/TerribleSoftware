@@ -15,8 +15,8 @@ public class SLS {
 	private long currentTime;
 	private Solution solution;
 
-	private final double P_LOWER = 0.3;
-	private final double P_UPPER = 0.6;
+	private final double P_LOWER = 0.5;
+	private final double P_UPPER = 0.9;
 
 	public SLS(List<Vehicle> vehicles, TaskSet tasks, long timeLimit) {
 		this.startTime = System.currentTimeMillis();
@@ -27,7 +27,7 @@ public class SLS {
 		timeLimit -= 500; // The other way didn't work somehow - non-integer
 							// time maybe?
 
-		int selectInitial = 4;
+		int selectInitial = 2;
 		Solution solution = null;
 
 		switch (selectInitial) {
@@ -544,8 +544,8 @@ public class SLS {
 		Collections.shuffle(vehicles);
 		solutions.addAll(this.transferFirstTask(vehicles.get(0), oldSolution.getSimpleVehicleAgendas()));
 		
-		for (int i = 1; i < vehicles.size(); i++) {
-			Vehicle chosenVehicle = vehicles.get(i);
+		//for (int i = 1; i < vehicles.size(); i++) {
+			Vehicle chosenVehicle = vehicles.get(0);
 	
 			for (Solution s : (ArrayList<Solution>) solutions.clone()) {
 				solutions.addAll(this.swapFirstTask(chosenVehicle, s.getSimpleVehicleAgendas())); // TODO
@@ -553,7 +553,7 @@ public class SLS {
 			
 			solutions.addAll(this.swapFirstTask(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
 
-		}
+		//}
 		//!IDEA 2
 		
 
