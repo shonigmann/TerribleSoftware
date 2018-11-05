@@ -73,7 +73,8 @@ public class Centralized implements CentralizedBehavior {
     	ArrayList<Solution> solutions = sls.transferFirstTask(chosenVehicle, solution.getSimpleVehicleAgendas());
     	System.out.println("Aa");
     	// 
-    	
+
+    	double cost = 0;
         for(Vehicle vehicle : vehicles){
         	ArrayList<Action> actionList = vehicleAgendas.get(vehicle);
         	if(actionList == null){
@@ -82,8 +83,11 @@ public class Centralized implements CentralizedBehavior {
         	else {
             	Plan plan = new Plan(vehicle.getCurrentCity(),vehicleAgendas.get(vehicle));
             	plans.add(plan);	
-        	}
+            	System.out.println("FINAL PLAN COST FOR VEHICLE "+vehicle.toString()+": "+plan.totalDistance()*vehicle.costPerKm());
+            	cost+=plan.totalDistance();
+        	}        	
         }
+    	System.out.println("TOTAL PLAN COST: "+cost*vehicles.get(0).costPerKm());
                 
         long time_end = System.currentTimeMillis();
         long duration = time_end - time_start;
