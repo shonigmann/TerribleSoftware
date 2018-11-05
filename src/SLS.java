@@ -27,7 +27,7 @@ public class SLS {
 		timeLimit -= 500; // The other way didn't work somehow - non-integer
 							// time maybe?
 
-		int selectInitial = 3;
+		int selectInitial = 4;
 		Solution solution = null;
 
 		switch (selectInitial) {
@@ -39,6 +39,9 @@ public class SLS {
 			break;
 		case 3:
 			solution = selectInitialSolutionGreedy(vehicles, tasks);
+			break;
+		case 4:
+			solution = this.selectInitialSolutionFeedAllToFirst(vehicles, tasks);
 			break;
 		}
 
@@ -62,6 +65,7 @@ public class SLS {
 			diffTime = System.currentTimeMillis() - this.startTime;
 		}
 		System.out.println("SLS constructed");
+		
 	}
 
 	public Solution getSolution() {
@@ -233,7 +237,7 @@ public class SLS {
 				
 				// Create one solution per place where you can append the
 				// delivery
-				for (int i = 1; i < tempSimpleVehicleAgenda.size(); i++) {
+				for (int i = 1; i <= tempSimpleVehicleAgenda.size(); i++) {
 					// handle the chosenVehicle
 					@SuppressWarnings("unchecked")
 					HashMap<Vehicle, ArrayList<TaskWrapper>> newSimpleVehicleAgendas = (HashMap<Vehicle, ArrayList<TaskWrapper>>) simpleVehicleAgendas.clone();
@@ -292,6 +296,42 @@ public class SLS {
 		
 		return maxCarriedWeight <= vehicle.capacity();
 	}
+	
+	/**
+	 * Create a solution where the first vehicle will pick up and delivery each task, one by one
+	 * If at one point the first vehicle cannot carry a task, it'll try to give it to the next one, and so on.
+	 * 
+	 * @param vehicles
+	 * @param tasks
+	 * @return
+	 */
+	private Solution selectInitialSolutionFeedAllToFirst(List<Vehicle> vehicles, TaskSet tasks) { 
+		HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas = new HashMap<Vehicle, ArrayList<TaskWrapper>>();
+		
+		// Initializing simpleVehicleAgendas
+		for (Vehicle v : vehicles) {
+			simpleVehicleAgendas.put(v, new ArrayList<TaskWrapper>());
+		}
+		
+		Vehicle vehicle = null;
+		for (Task task : tasks) {
+			// Find the first vehicle that can carry the task
+			for (Vehicle v : vehicles) {
+				if (v.capacity() >= task.weight) {
+					vehicle = v;
+					break;
+				}
+			}
+			
+			assert vehicle != null; //If the vehicle is null at this point, it means there is no vehicle able to carry the task
+			
+			simpleVehicleAgendas.get(vehicle).add(new TaskWrapper(task, true));
+			simpleVehicleAgendas.get(vehicle).add(new TaskWrapper(task, false));
+		}
+		
+		return new Solution(simpleVehicleAgendas);
+	}
+		
 
 	/*
 	 * Just assign tasks to vehicles one by one, no thinking about it
@@ -356,6 +396,7 @@ public class SLS {
 		for (Task task : tasks) {
 			workingTaskList.add(task);
 		}
+		
 
 		// stores the action of the vehicle
 		HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas = new HashMap<Vehicle, ArrayList<TaskWrapper>>();
@@ -463,7 +504,7 @@ public class SLS {
 	private ArrayList<Solution> chooseNeighbours(Solution oldSolution) {
 		// TODO BETTER RANDOM VEHICLE PICKED
 		ArrayList<Solution> solutions = new ArrayList<Solution>();
-		ArrayList<Vehicle> vehicles = oldSolution.getVehicles();
+		ArrayList<Vehicle> vehicles = (ArrayList<Vehicle>) oldSolution.getVehicles().clone();
 		Collections.shuffle(vehicles);
 
 		// BIG TODO: for some reason when a greedy initial solution is selected (all
@@ -471,20 +512,50 @@ public class SLS {
 		// generated...
 		// this is despite me adding a loop to guarantee that swaps are made for all
 		// vehicles...
-		ArrayList<Solution> vehicleSolutions = new ArrayList<Solution>();
+		
+		//IDEA 1
+//		ArrayList<Solution> vehicleSolutions = new ArrayList<Solution>();
+//		for (int i = 1; i < vehicles.size(); i++) {
+//			Vehicle chosenVehicle = vehicles.get(i);
+//			vehicleSolutions.addAll(this.transferFirstTask(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
+//
+//			ArrayList<Solution> vehicleSolutions2 = new ArrayList<Solution>();
+//			for (Solution s : (ArrayList<Solution>) vehicleSolutions.clone()) {
+//				vehicleSolutions2.addAll(this.swapFirstTask(chosenVehicle, s.getSimpleVehicleAgendas())); // TODO
+//			}
+//			solutions.addAll(vehicleSolutions2);
+//
+//			vehicleSolutions.addAll(this.swapFirstTask(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
+//		}
+//		solutions.addAll(vehicleSolutions);
+		//! IDEA 1
+		
+		//IDEA 2
+		
+		// Remove all the vehicles with no tasks 
+		for (Vehicle v : (ArrayList<Vehicle>) vehicles.clone()) {
+			if (oldSolution.getSimpleVehicleAgendas().get(v).isEmpty()) {
+				vehicles.remove(v);
+			}
+		}
+		
+		
+		
+		Collections.shuffle(vehicles);
+		solutions.addAll(this.transferFirstTask(vehicles.get(0), oldSolution.getSimpleVehicleAgendas()));
+		
 		for (int i = 1; i < vehicles.size(); i++) {
 			Vehicle chosenVehicle = vehicles.get(i);
-			vehicleSolutions.addAll(this.transferFirstTask(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
-
-			ArrayList<Solution> vehicleSolutions2 = new ArrayList<Solution>();
-			for (Solution s : (ArrayList<Solution>) vehicleSolutions.clone()) {
-				vehicleSolutions2.addAll(this.swapFirstTask(chosenVehicle, s.getSimpleVehicleAgendas())); // TODO
+	
+			for (Solution s : (ArrayList<Solution>) solutions.clone()) {
+				solutions.addAll(this.swapFirstTask(chosenVehicle, s.getSimpleVehicleAgendas())); // TODO
 			}
-			solutions.addAll(vehicleSolutions2);
+			
+			solutions.addAll(this.swapFirstTask(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
 
-			vehicleSolutions.addAll(this.swapFirstTask(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
 		}
-		solutions.addAll(vehicleSolutions);
+		//!IDEA 2
+		
 
 		return solutions;
 	}
