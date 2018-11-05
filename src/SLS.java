@@ -18,7 +18,7 @@ public class SLS {
 	private final double P_LOWER = 0.5;
 	private final double P_UPPER = 0.9;
 
-	public SLS(List<Vehicle> vehicles, TaskSet tasks, long timeLimit) {
+ 	public SLS(List<Vehicle> vehicles, TaskSet tasks, long timeLimit) {
 		this.startTime = System.currentTimeMillis();
 		this.solution = selectInitialSolution(vehicles, tasks);
 		this.currentTime = System.currentTimeMillis();
@@ -142,6 +142,11 @@ public class SLS {
 	 */
 	public Solution swapTwoTasks(Vehicle vehicle, Task taskA, Task taskB,
 			HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
+
+		if(taskA == taskB){
+			return null;
+		}
+		
 		assert simpleVehicleAgendas.containsKey(vehicle);
 
 		HashSet<Task> tasks = new HashSet<Task>();
@@ -153,8 +158,7 @@ public class SLS {
 
 		/* Swapping */
 		@SuppressWarnings("unchecked")
-		ArrayList<TaskWrapper> newSimpleVehicleAgenda = (ArrayList<TaskWrapper>) simpleVehicleAgendas.get(vehicle)
-				.clone();
+		ArrayList<TaskWrapper> newSimpleVehicleAgenda = (ArrayList<TaskWrapper>) simpleVehicleAgendas.get(vehicle).clone();
 
 		int posPickupTaskA = -1;
 		int posPickupTaskB = -1;
@@ -164,17 +168,45 @@ public class SLS {
 		// Finding where is the pickup and delivery of both tasks
 		for (int i = 0; i < newSimpleVehicleAgenda.size(); i++) {
 			TaskWrapper tw = newSimpleVehicleAgenda.get(i);
-			if (tw.getTask() == taskA) {
+			if (tw.getTask().id == taskA.id) {
 				if (tw.isPickup()) {
-					posPickupTaskA = i;
+					posPickupTaskA = i; // ..
 				} else {
 					posDeliveryTaskA = i;
 				}
-			} else if (tw.getTask() == taskB) {
+			} else if (tw.getTask().id == taskB.id) {
 				if (tw.isPickup()) {
-					posPickupTaskB = i;
+					posPickupTaskB = i; // .
 				} else {
-					posDeliveryTaskB = i;
+					posDeliveryTaskB = i; // .
+				}
+			}
+		}
+
+		if((posPickupTaskB == -1)||(posDeliveryTaskB == -1)||(posPickupTaskA == -1)||(posDeliveryTaskA == -1)){
+			System.out.println("vehicle:" + vehicle.toString() + "; taskA: " + taskA.toString() + "; taskB: " + taskB.toString());
+			System.out.println(" ");
+		}
+		
+		int posPickupTaskA2 = -1;
+		int posPickupTaskB2 = -1;
+		int posDeliveryTaskA2 = -1;
+		int posDeliveryTaskB2 = -1;
+
+		// Finding where is the pickup and delivery of both tasks THIS DUPLICATE OF PREVIOUS CODE IS FOR DEBUGGING.
+		for (int i = 0; i < newSimpleVehicleAgenda.size(); i++) {
+			TaskWrapper tw = newSimpleVehicleAgenda.get(i);
+			if (tw.getTask().id == taskA.id) {
+				if (tw.isPickup()) {
+					posPickupTaskA2 = i; // ..
+				} else {
+					posDeliveryTaskA2 = i;
+				}
+			} else if (tw.getTask().id == taskB.id) {
+				if (tw.isPickup()) {
+					posPickupTaskB2 = i; // .
+				} else {
+					posDeliveryTaskB2 = i; // .
 				}
 			}
 		}
@@ -186,6 +218,12 @@ public class SLS {
 		TaskWrapper pickupTaskA = newSimpleVehicleAgenda.get(posPickupTaskA);
 		TaskWrapper deliveryTaskA = newSimpleVehicleAgenda.get(posDeliveryTaskA);
 
+		//DEBUGGING
+		if(pickupTaskB.isPickup()==deliveryTaskB.isPickup() || pickupTaskA.isPickup()==deliveryTaskB.isPickup())
+		{
+			System.out.println("PROBLEM");
+		}
+		
 		// Put task A at taskB's place
 		newSimpleVehicleAgenda.set(posPickupTaskB, pickupTaskA);
 		newSimpleVehicleAgenda.set(posDeliveryTaskB, deliveryTaskA);
@@ -242,18 +280,17 @@ public class SLS {
 
 			simpleChosenVehicleAgenda.remove(0); // Remove the pickup
 
-			TaskWrapper deliveryToTransfer = new TaskWrapper(pickupToTransfer.getTask(), false);
+			TaskWrapper deliveryToTransfer = new TaskWrapper(pickupToTransfer.getTask(), false); 
 			simpleChosenVehicleAgenda.remove(deliveryToTransfer);
 
 			// make sure we got rid of the pickup and delivery
-			assert simpleChosenVehicleAgenda.size() - 2 == simpleVehicleAgendas.get(chosenVehicle).size();
+			assert (simpleChosenVehicleAgenda.size() == simpleVehicleAgendas.get(chosenVehicle).size() - 2); //TODO: shouldnt this have the -2 on the ohter side ( changed it to the rhs for testing)
 
 			for (Vehicle vehicle : vehicles) {
 
 				@SuppressWarnings("unchecked")
 				ArrayList<TaskWrapper> tempSimpleVehicleAgenda = (ArrayList<TaskWrapper>) simpleVehicleAgendas.get(vehicle).clone();
 				tempSimpleVehicleAgenda.add(0, pickupToTransfer);
-
 				
 				// Create one solution per place where you can append the
 				// delivery
