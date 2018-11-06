@@ -495,9 +495,8 @@ public class SLS {
 		} else {
 			this.repeatCount++;
 		}
-		System.out.println(
-				"BEST SOLUTION COST: " + this.solution.totalCost + "; LOCAL CHOICE COSTS : " + localMinSolutionTotalCost
-						+ "; Chosen from " + Integer.toString(solutions.size()) + " possible neighbors");
+		//used for debugging
+		// System.out.println("BEST SOLUTION COST: " + this.solution.totalCost + "; LOCAL CHOICE COSTS : " + localMinSolutionTotalCost+ "; Chosen from " + Integer.toString(solutions.size()) + " possible neighbors");
 
 		return localMinSolution;
 	}
