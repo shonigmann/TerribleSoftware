@@ -78,7 +78,7 @@ public class Solution {
 		//Generate complete vehicle task lists from simplified version
 		for(Vehicle vehicle : this.vehicles){
 			ArrayList<TaskWrapper> simpleTaskList = simpleVehicleAgendas.get(vehicle);
-			City origin = vehicle.getCurrentCity(); //TODO: set origin city
+			City origin = vehicle.getCurrentCity();
 			for(TaskWrapper task : simpleTaskList){
 				if(completeVehicleAgenda.containsKey(vehicle)){
 					completeVehicleAgenda.get(vehicle).addAll(getTaskActions(origin,task));	
@@ -93,6 +93,14 @@ public class Solution {
 		return completeVehicleAgenda;
 	}
 	
+	/**
+	 * 
+	 * @param origin
+	 * @param task
+	 * @return a list of Action, consisting, in order, 
+	 * of the actions needed to go from origin 
+	 * and then perform the action related to task
+	 */
 	private ArrayList<Action> getTaskActions(City origin, TaskWrapper task) {
 
 		ArrayList<Action> actions = new ArrayList<Action>();
@@ -114,6 +122,11 @@ public class Solution {
 		return actions;
 	}
 	
+	/**
+	 * 
+	 * @param vehicle
+	 * @return the tasks handled by vehicle
+	 */
 	public HashSet<Task> getTasks(Vehicle vehicle) {
 		HashSet<Task> tasksOfThisVehicle = new HashSet<Task>();
 		for (TaskWrapper taskWrapper : this.simpleVehicleAgendas.get(vehicle)) {
