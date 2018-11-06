@@ -27,15 +27,15 @@
 \section{Solution Representation}
 \subsection{Variables}
 % Describe the variables used in your solution representation %
-A Solution class was created to better store and manage information for each potential delivery solution. A texttt{Solution} object consists of a texttt{HashMap} of texttt{ArrayList}s of texttt{Task}s where each vehicle in the initialization is a key. Each texttt{ArrayList} contains a list wrapped version of a task, which includes information for whether the task is to be picked up or delivered, in the order in which the vehicle is supposed to perform those actions. The Solution also stores it's total cost. Finally, the texttt{Solution} has a method, which can convert the simplified list of pick-ups and drop-offs into a complete action list suitable for Plan generation.
+A \texttt{Solution} class was created to better store and manage information for each potential delivery solution. A \texttt{Solution} object consists of a \texttt{HashMap} of \texttt{Vehicle}s as key and \texttt{ArrayList}s of \texttt{Action}s as value, also called an agenda. A reduced version of each agenda, which simply includes information for whether the task is to be picked up or delivered and where, in the order in which the vehicle is supposed to perform those actions is also stored in the \texttt{Solution}. Finally, the texttt{Solution} has a method, which can convert the simplified list of pick-ups and drop-offs into a complete action list suitable for Plan generation.
 
 \subsection{Constraints}
 % Describe the constraints in your solution representation %
 Relatively few constraints are applied to the solution representation. Constraints include the following:
 
 \begin{compactenum}
-	\item Plans cannot result in a vehicle carrying more tasks that its capacity allows.
-	\item Deliveries must always after pick-ups in the generated task lists.
+	\item Solutions cannot result in a vehicle carrying more tasks that its capacity allows.
+	\item Deliveries must always be after pick-ups in the generated task lists.
 	\item A vehicle which picks up a task must also deliver that task. There is no exchange between vehicles, within a plan.
 	\item All tasks provided upon initialization must be picked up and delivered in the generated solution.
 	\item A solution must be generated within the time-out specified in the default\_settings.xml file. 
@@ -43,26 +43,26 @@ Relatively few constraints are applied to the solution representation. Constrain
 
 \subsection{Objective function}
 % Describe the function that you optimize %
-The function to be optimized is the sum of distances travelled by each vehicle for a given solution. For each generated neighbour solution, this value is compared to the current best solution. Any solution outperforming the previous best is stored as the new best solution.
+The function to be optimized is the sum of the costs incurred by each vehicle for a given solution. This allows each solution's optimality to be comparable.
 
 \section{Stochastic optimization}
 
 \subsection{Initial solution}
 % Describe how you generate the initial solution %
-Several methods for generating an initial solution were explored. First, a naive approach which sequentially distributed tasks between each vehicle, to result in a distributed initial task allocation. Second was a greedy approach, which assigned every single task to the first vehicle in the vehicle list which could carry the task. This resulted in the first vehicle having the majority of tasks assigned to it. It is assumed for all initial solutions, that at least one vehicle can carry the largest task in the specified task list. If a task is ever larger than the selected vehicle's capacity, it is assigned to a different vehicle until the selected vehicle has a large enough capacity.
+Several methods for generating an initial solution were explored. First, a naive approach which sequentially distributed tasks between each vehicle, to result in a distributed initial task allocation. Second was a greedy approach, which assigned every single task to the first vehicle in the vehicle list which could carry the task. This resulted in the first vehicle having the majority of tasks assigned to it. It is assumed for all initial solutions, that at least one vehicle can carry the largest task in the specified task list. If a task is ever larger than the selected vehicle's capacity, it is assigned to a different vehicle until the selected vehicle has a large enough capacity.\\
 
-Ultimately, our testing showed that the naive approach was the most consistent, and this initialization was used in all future experiments. 
+Ultimately, our testing showed that the naive approach was the most consistent with a low total final cost. This initialization was therefore used in all future experiments. 
 
 \subsection{Generating neighbours}
 % Describe how you generate neighbors %
-First a vehicle that has at least 1 task is randomly selected. Then each task carried by the chosen vehicle is reinserted into for each possible location of the task pick-up and task delivery in every vehicle (including the chosen vehicle). Each solution represented by the new task location is set as a new neighbour. Every generation created by this method therefore contains neighbours created by swapping task positions within a given vehicle and by transferring tasks between vehicles. Only neighbours that satisfy the constraints listed above are returned. 
+First a vehicle that has at least 1 task is randomly selected. Then each task carried by the chosen vehicle is reinserted into for each possible location of the task pick-up and task delivery in every vehicle (including the chosen vehicle). Each solution represented by the new task location is set as a new neighbour. Every generation created by this method therefore contains neighbours created by swapping task positions within a given vehicle and by transferring tasks between vehicles. Only neighbours that satisfy the constraints listed above are returned. The neigbours generation therefore works in $O(number\_of\_vehicles * (number\_of\_tasks)^3)$.
 
 \subsection{Stochastic optimization algorithm}
 % Describe your stochastic optimization algorithm %
 
-Every time neighbours are generated, the local minimum is first found and compared to the current best solution. If it outperforms the current best, the current best is replaced by the local minimum. To implement the stochastic local portion of stochastic local search, two probability thresholds are defined: texttt{P\_Upper} and texttt{P\_Lower} which determine how the next iteration's base solution will be selected. Every iteration, a random number is generated between 0 and 1. If the number is below texttt{P\_Lower}, the local minimum solution is returned and used to generate the next set of neighbours. If the number is between texttt{P\_Upper} and texttt{P\_Lower}, inclusive, the previous solution used to generate neighbours is returned. If the number is above texttt{P\_Upper}, a random solution is selected from the set of neighbours and is used to generate future neighbours. 
+Every time neighbours are generated, the local minimum is first found and compared to the current best solution. If it outperforms the current best, the current best is replaced by the local minimum. To implement the stochastic local portion of stochastic local search, two probability thresholds are defined: \texttt{P\_Upper} and \texttt{P\_Lower} which determine how the next iteration's base solution will be selected. Every iteration, a random number is generated between 0 and 1. If the number is below \texttt{P\_Lower}, the local minimum solution is returned and used to generate the next set of neighbours. If the number is between \texttt{P\_Upper} and \texttt{P\_Lower}, inclusive, the previous solution is used to generate neighbours. If the number is above \texttt{P\_Upper}, a random solution is selected from the set of neighbours and is used to generate future neighbours.
 
-To formalize our approach, we added local-minimum loop detection. If the optimal solution stayed in the same for more than \texttt{MAX\_REPEAT} times, then a random neighbour is automatically selected. This is to try to avoid getting caught at local-minima, without sacrificing performance early in the search by selecting random neighbours when the new local minima are consistently improving. After adding this, \texttt{P\_Upper} was set to 1 so that random selection is only used when solution stagnation occurs.
+To formalize our approach, we added local-minimum loop detection. If the optimal solution stayed the same for more than \texttt{MAX\_REPEAT} times, then a random neighbour is automatically selected. This is to try to avoid getting caught at local-minima, without sacrificing performance early in the search by selecting random neighbours when the new local minima are consistently improving. After adding this, \texttt{P\_Upper} was set to 1 so that random selection is only used when solution stagnation occurs.
 
 \section{Results}
 For all experiments, plan time out was set to 30 s and every value reported was averaged over 3 trials. 
@@ -72,7 +72,7 @@ In the first experiment we tested the impact of texttt{P\_Lower} and \texttt{MAX
 \subsubsection{Setting}
 % Describe the settings of your experiment: topology, task configuration, number of tasks, number of vehicles, etc. %
 % and the parameters you are analyzing %
-Settings for this experiment are specified in \texttt{E1\_centralized.xml} and \texttt{E1\_settings\_default.xml}. This experiment always used 30 tasks, 4 vehicles, and the England topology. Values of \texttt{MAX\_REPEAT} between 2 and 20, and texttt{P\_Lower} between 0.1 and 1 were tested. The results are included in the following section. 
+Settings for this experiment are specified in \texttt{E1\_centralized.xml} and \texttt{E1\_settings\_default.xml}. This experiment always used 30 tasks, 4 vehicles, and the England topology. Values of \texttt{MAX\_REPEAT} of 2, 10 and 20, and  \texttt{P\_Lower} of 0.1, 0.5, 0.8 and 1 were tested. The results are included in the following section. 
 \subsubsection{Observations}
 % Describe the experimental results and the conclusions you inferred from these results 
 
@@ -91,7 +91,7 @@ Settings for this experiment are specified in \texttt{E1\_centralized.xml} and \
 \end{table}
 
 
-As is shown in the table, \texttt{MAX\_REPEAT} and \texttt{P\_Lower} strongly influence the performance of the solution generation. When \texttt{P\_Lower} is too small, the search is too likely to hold on to old solutions and doesn't explore enough to find optimal solutions. As \texttt{P\_Lower} increases, the solution favours local minima and stops holding onto old solutions. This proves to be advantageous in all cases, though this is likely due to our implementation of loop detection. There also appears to be an optimal number of allowed repetitions during loop checking. Too few and the search wanders in random directions too often. Too many, and the algorithm gets stuck at local minima without exploring enough to find more optimal solutions.
+As is shown in the table, \texttt{MAX\_REPEAT} and \texttt{P\_Lower} strongly influence the performance of the solution generation. When \texttt{P\_Lower} is too small, the search is too likely to hold on to old solutions and does not explore enough to find optimal solutions. As \texttt{P\_Lower} increases, the solution favours local minima and stops holding onto old solutions. There also appears to be an optimal number of allowed repetitions during loop checking. Too few and the search wanders in random directions too often. Too many, and the algorithm gets stuck at local minima without exploring enough to find more optimal solutions.
 
 \subsection{Experiment 2: Different configurations}
 % Run simulations for different configurations of the environment (i.e. different tasks and number of vehicles) %
@@ -105,7 +105,7 @@ Settings for this experiment are specified in \texttt{E2\_centralized.xml} and \
 % Describe the experimental results and the conclusions you inferred from these results %
 % Reflect on the fairness of the optimal plans. Observe that optimality requires some vehicles to do more work than others. %
 % How does the complexity of your algorithm depend on the number of vehicles and various sizes of the task set? %
-Table 2 shows the cost for different plans, as well as the number of vehicles carrying tasks (VCT) for each plan. As can be seen from the data in Table 2, for a small number of tasks, there is little benefit of having multiple vehicles. There is also a high disparity among vehicles in terms of number of tasks carried. One vehicle tends to carry all or the majority of the tasks for the group. As the number of tasks increases, the task distribution also improves, and more vehicles have tasks to carry. However, it is still almost always found to be more efficient for most vehicles, as seen with the 10 vehicle data points, to sit idle. We would expect a very different distribution of labour if the optimization function included a time cost, preferring faster solutions to slower solutions. This would result in a more realistic allocation of resources. 
+Table 2 shows the cost for different plans, as well as the number of vehicles actually carrying tasks (VCT) for each plan. As can be seen from the data in Table 2, for a small number of tasks, there is little benefit of having multiple vehicles. There is also a high disparity among vehicles in terms of number of tasks carried. One vehicle tends to carry all or the majority of the tasks for the group. As the number of tasks increases, the task distribution also improves, and more vehicles have tasks to carry. However, it is still almost always found to be more efficient for most vehicles, as seen with the 10 vehicle data points, to sit idle. We would expect a very different distribution of labour if the optimization function included a time cost, preferring faster solutions to slower solutions. This would result in a more realistic allocation of resources, each vehicle carrying tasks in order to distribute everything as quickly as possible.
 
 \begin{table}[h]	
 	\centering
@@ -120,5 +120,5 @@ Table 2 shows the cost for different plans, as well as the number of vehicles ca
 	\end{tabular}
 \end{table}
 
-The complexity of the algorithm grows quickly with the number of tasks, as it generates neighbours for every possible pick-up and drop-off action positions in the recipient vehicle's task list. This results in considerable growth in complexity with respect to the number of tasks. The growth is proportional to the number of vehicles. The complexity is reduced with a greedy initialization that favours one vehicle or in the common case where one vehicle carries the majority of tasks, as not many positions are available in vehicles not carrying tasks. If a very large number of tasks were to be computed, the algorithm could be modified to only generate a limited number of random neighbours rather than all possible neighbours. 
+The complexity of the algorithm grows quickly with the number of tasks, as it generates neighbours for every possible pick-up and drop-off action positions in the recipient vehicle's task list. This results in considerable growth in complexity with respect to the number of tasks. The growth is proportional to the number of vehicles. If a very large number of tasks were to be computed, the algorithm could be modified to only generate a limited number of random neighbours rather than all possible neighbours. 
 \end{document}
