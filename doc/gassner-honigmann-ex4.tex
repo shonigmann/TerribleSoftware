@@ -11,7 +11,7 @@
 \usepackage{array}
 \usepackage{wrapfig}
 \usepackage[T1]{fontenc}
-\usepackage{babel}
+\usepackage[english]{babel}
 \usepackage{geometry}
 \usepackage{titling}
 \usepackage{blindtext}
@@ -79,7 +79,7 @@ Settings for this experiment are specified in \texttt{E1\_centralized.xml} and \
 
 \begin{table}
 	\centering
-	\caption{Comparison of Different \texttt{MAX\_REPEAT} and \texttt{P\_Lower} Values}
+	\caption{Cost of the optimal plan for different \texttt{MAX\_REPEAT} and \texttt{P\_Lower} values}
 	\begin{tabular}{|c|c|c|c|c|}
 		\hline
 		\multirow{2}{*}{MAX\_REPEAT} & \multicolumn{4}{c|}{P\_Lower} \\ \cline{2-5} 
@@ -91,13 +91,15 @@ Settings for this experiment are specified in \texttt{E1\_centralized.xml} and \
 \end{table}
 
 
-As is shown in the table, \texttt{MAX\_REPEAT} and texttt{P\_Lower} strongly influence the performance of the solution generation. When texttt{P\_Lower} is too small, the search is too likely to hold on to old solutions and doesn't explore enough to find optimal solutions. As texttt{P\_Lower} increases, the solution favours local minima and stops holding onto old solutions. This proves to be advantageous in all cases, though this is likely due to our implementation of loop detection. There also appears to be an optimal number of allowed repetitions during loop checking. Too few and the search wanders in random directions too often. Too many, and the algorithm gets stuck at local minima without exploring enough to find more optimal solutions.
+As is shown in the table, \texttt{MAX\_REPEAT} and \texttt{P\_Lower} strongly influence the performance of the solution generation. When \texttt{P\_Lower} is too small, the search is too likely to hold on to old solutions and doesn't explore enough to find optimal solutions. As \texttt{P\_Lower} increases, the solution favours local minima and stops holding onto old solutions. This proves to be advantageous in all cases, though this is likely due to our implementation of loop detection. There also appears to be an optimal number of allowed repetitions during loop checking. Too few and the search wanders in random directions too often. Too many, and the algorithm gets stuck at local minima without exploring enough to find more optimal solutions.
 
 \subsection{Experiment 2: Different configurations}
 % Run simulations for different configurations of the environment (i.e. different tasks and number of vehicles) %
 
 \subsubsection{Setting}
 % Describe the settings of your experiment: topology, task configuration, number of tasks, number of vehicles, etc. %
+Settings for this experiment are specified in \texttt{E2\_centralized.xml} and \texttt{E1\_settings\_default.xml}. We run the experiment for 1, 4 and 10 vehicles, each time with 5 and 30 tasks.\\
+
 
 \subsubsection{Observations}
 % Describe the experimental results and the conclusions you inferred from these results %

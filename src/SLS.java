@@ -412,18 +412,21 @@ public class SLS {
 		ArrayList<Solution> solutions = new ArrayList<Solution>();
 		ArrayList<Vehicle> vehicles = (ArrayList<Vehicle>) oldSolution.getVehicles().clone();
 
-		// Remove all the vehicles with no tasks
-		for (Vehicle v : (ArrayList<Vehicle>) vehicles.clone()) {
-			if (oldSolution.getSimpleVehicleAgendas().get(v).isEmpty()) {
-				vehicles.remove(v);
+		if (vehicles.size() > 1) {
+			// Remove all the vehicles with no tasks
+			for (Vehicle v : (ArrayList<Vehicle>) vehicles.clone()) {
+				if (oldSolution.getSimpleVehicleAgendas().get(v).isEmpty()) {
+					vehicles.remove(v);
+				}
 			}
+			
+			Random rand = new Random();
+			Vehicle chosenVehicle = vehicles.get(rand.nextInt(vehicles.size()));
+
+			solutions.addAll(this.transferAllTasksToAllVehicles(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
+		} else {
+			solutions.addAll(this.swap)
 		}
-		
-		Random rand = new Random();
-		Vehicle chosenVehicle = vehicles.get(rand.nextInt(vehicles.size()));
-
-		solutions.addAll(this.transferAllTasksToAllVehicles(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
-
 		return solutions;
 	}
 
