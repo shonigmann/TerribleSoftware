@@ -49,13 +49,13 @@ The function to be optimized is the sum of distances travelled by each vehicle f
 
 \subsection{Initial solution}
 % Describe how you generate the initial solution %
-Several methods for generating an initial solution were explored. First, a naive approach which sequentially distributed tasks between each vehicle, to result in a distributed initial task allocation. Second was a greedy approach, which assigned every single task to the first vehicle in the vehicle list which could carry the task. This resulted in the first vehicle having the majority of tasks assigned to it. It is assumed for all initial solutions, that at least one vehicle can carry the largest task in the specified task list. If a task is ever larger than the selected vehicle's capacity, it is assigned to a different vehicle until the selected vehicle has a large enough capacity.  
+Several methods for generating an initial solution were explored. First, a naive approach which sequentially distributed tasks between each vehicle, to result in a distributed initial task allocation. Second was a greedy approach, which assigned every single task to the first vehicle in the vehicle list which could carry the task. This resulted in the first vehicle having the majority of tasks assigned to it. It is assumed for all initial solutions, that at least one vehicle can carry the largest task in the specified task list. If a task is ever larger than the selected vehicle's capacity, it is assigned to a different vehicle until the selected vehicle has a large enough capacity.
 
 Ultimately, our testing showed that the naive approach was the most consistent, and this initialization was used in all future experiments. 
 
 \subsection{Generating neighbours}
 % Describe how you generate neighbors %
-First a vehicle that has at least 1 task is randomly selected. Then for every each task carried by the chosen vehicle, for each additional vehicle, and for each possible location of the task pick-up and task delivery in the new vehicle, a neighbour is generated. This method indirectly accounts for switching the order of tasks within a vehicle, as through multiple iterations of neighbour generation a task could change back to its original carrier. With this method, it is possible to reach every possible permutation of task distribution, given enough time. Only neighbours that satisfy the constraints listed above are returned. 
+First a vehicle that has at least 1 task is randomly selected. Then each task carried by the chosen vehicle is reinserted into for each possible location of the task pick-up and task delivery in every vehicle (including the chosen vehicle). Each solution represented by the new task location is set as a new neighbour. Every generation created by this method therefore contains neighbours created by swapping task positions within a given vehicle and by transferring tasks between vehicles. Only neighbours that satisfy the constraints listed above are returned. 
 
 \subsection{Stochastic optimization algorithm}
 % Describe your stochastic optimization algorithm %
@@ -65,7 +65,7 @@ Every time neighbours are generated, the local minimum is first found and compar
 To formalize our approach, we added local-minimum loop detection. If the optimal solution stayed in the same for more than \texttt{MAX\_REPEAT} times, then a random neighbour is automatically selected. This is to try to avoid getting caught at local-minima, without sacrificing performance early in the search by selecting random neighbours when the new local minima are consistently improving. After adding this, \texttt{P\_Upper} was set to 1 so that random selection is only used when solution stagnation occurs.
 
 \section{Results}
-For all experiments, the following settings were kept constant. Plan time out was 30 s. Every cost value reported was averaged over 3 trials. 
+For all experiments, plan time out was set to 30 s and every value reported was averaged over 3 trials. 
 \subsection{Experiment 1: Model parameters}
 % if your model has parameters, perform an experiment and analyze the results for different parameter values %
 In the first experiment we tested the impact of texttt{P\_Lower} and \texttt{MAX\_REPEAT} on the final plan cost.
@@ -79,7 +79,7 @@ Settings for this experiment are specified in \texttt{E1\_centralized.xml} and \
 
 \begin{table}
 	\centering
-	\caption{Comparison of Different \texttt{MAX\_REPEAT} and \texttt{P\_Lower} Values}
+	\caption{Plan Cost for Different \texttt{MAX\_REPEAT} and \texttt{P\_Lower} Values}
 	\begin{tabular}{|c|c|c|c|c|}
 		\hline
 		\multirow{2}{*}{MAX\_REPEAT} & \multicolumn{4}{c|}{P\_Lower} \\ \cline{2-5} 
@@ -95,7 +95,7 @@ As is shown in the table, \texttt{MAX\_REPEAT} and texttt{P\_Lower} strongly inf
 
 \subsection{Experiment 2: Different configurations}
 % Run simulations for different configurations of the environment (i.e. different tasks and number of vehicles) %
-
+In this experiment, we wanted to compare the efficiencies of different numbers of vehicles to see how evenly distributed tasks were among the vehicles. 
 \subsubsection{Setting}
 % Describe the settings of your experiment: topology, task configuration, number of tasks, number of vehicles, etc. %
 
@@ -104,4 +104,21 @@ As is shown in the table, \texttt{MAX\_REPEAT} and texttt{P\_Lower} strongly inf
 % Reflect on the fairness of the optimal plans. Observe that optimality requires some vehicles to do more work than others. %
 % How does the complexity of your algorithm depend on the number of vehicles and various sizes of the task set? %
 
+
+\begin{table}[]	
+	\centering
+	\caption{Plan Cost and Number of Vehicles Carrying Tasks for Different Numbers of Vehicles and Tasks}
+	\begin{tabular}{c|c|c|c|c|}
+		\cline{2-5}
+		\multirow{2}{*}{} & \multicolumn{4}{c|}{Number of Vehicles} \\ \cline{2-5} 
+		& \multicolumn{2}{c|}{4} & \multicolumn{2}{c|}{10} \\ \hline
+		\multicolumn{1}{|c|}{\# of Tasks} & Cost & VCT & Cost & VCT \\ \hline
+		\multicolumn{1}{|c|}{5} & \$5,752 & 1 & \$5,752 & 1 \\ \hline
+		\multicolumn{1}{|c|}{30} & \$16,966 & 2.33 & \$16,625 & 3 \\ \hline
+	\end{tabular}
+\end{table}
+
+As can be seen from the data above, for a small number of tasks, there is little benefit of having multiple vehicles. There is also a high disparity among vehicles in terms of number of tasks carried. One vehicle tends to carry all or the majority of the tasks for the group. As the number of tasks increases, the task distribution also improves, and more vehicles have tasks to carry. However, it is still almost always found to be more efficient for most vehicles, as seen with the 10 vehicle data points, to sit idle. We would expect a very different distribution of labour if the optimization function included a time cost, preferring faster solutions to slower solutions. This would result in a more realistic allocation of resources. 
+
+The complexity of the algorithm grows quickly with the number of tasks, as it generates neighbours for every possible pick-up and drop-off action positions in the recipient vehicle's task list. This results in considerable growth in complexity with respect to the number of tasks. The growth is proportional to the number of vehicles. The complexity is reduced with a greedy initialization that favours one vehicle or in the common case where one vehicle carries the majority of tasks, as not many positions are available in vehicles not carrying tasks. If a very large number of tasks were to be computed, the algorithm could be modified to only generate a limited number of random neighbours rather than all possible neighbours. 
 \end{document}
