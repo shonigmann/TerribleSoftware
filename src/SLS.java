@@ -14,7 +14,7 @@ public class SLS {
 	private long currentTime;
 	private Solution solution; // currently best solution we've seen
 
-	private final double P_LOWER = 0.1;
+	private final double P_LOWER = 1;
 	private final double P_UPPER = 1; 
 
 	private int repeatCount = 0;
@@ -22,29 +22,24 @@ public class SLS {
 	 * If the same local minimum is found MAX_REPEAT times in a row,
 	 * a neighbor is randomly selected
 	 */
-	private final int MAX_REPEAT = 2; 
+	private final int MAX_REPEAT = 10; 
 
 	public SLS(List<Vehicle> vehicles, TaskSet tasks, long timeLimit) {
 		this.startTime = System.currentTimeMillis();
-		this.solution = selectInitialSolution(vehicles, tasks);
 		this.currentTime = System.currentTimeMillis();
 
 		// Discount the time limit to ensure that a solution is returned
 		timeLimit -= 500; // The other way didn't work somehow - non-integer
 							// time maybe?
 
-		int selectInitial = 2;
-		Solution solution = null;
+		int selectInitial = 1;
 
 		switch (selectInitial) {
 		case 1:
-			solution = selectInitialSolution(vehicles, tasks);
+			this.solution = selectInitialSolutionNaive(vehicles, tasks);
 			break;
 		case 2:
-			solution = selectInitialSolutionNaive(vehicles, tasks);
-			break;
-		case 3:
-			solution = selectInitialSolutionGreedy(vehicles, tasks);
+			this.solution = selectInitialSolutionGreedy(vehicles, tasks);
 			break;
 		}
 
@@ -247,6 +242,11 @@ public class SLS {
 		// stores the action of the vehicle
 		HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas = new HashMap<Vehicle, ArrayList<TaskWrapper>>();
 
+		//INITIALIZE 
+		for (Vehicle v : vehicles) {
+			simpleVehicleAgendas.put(v, new ArrayList<TaskWrapper>());
+		}
+		
 		while (!pickupTaskList.isEmpty()) {
 
 			for (Vehicle vehicle : vehicles) {
@@ -277,82 +277,82 @@ public class SLS {
 	}
 
 	
-	private Solution selectInitialSolution(List<Vehicle> vehicles, TaskSet tasks) {
-
-		/*
-		 * Pseudo code outline here: Trying to be more efficient here. while TaskSet
-		 * contains tasks For vehicle : vehicles: assign head of task list to vehicle
-		 * Repeat: if another task exists at destination city of this task, add next
-		 * task Break if no task exists at destination city end end
-		 */
-
-		ArrayList<Task> workingTaskList = new ArrayList<Task>();
-		// store tasks in a more workable format
-		for (Task task : tasks) {
-			workingTaskList.add(task);
-		}
-
-		// stores the action of the vehicle
-		HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas = new HashMap<Vehicle, ArrayList<TaskWrapper>>();
-
-		// stores the location of the vehicle after the most recent action
-		HashMap<Vehicle, City> vehicleCities = new HashMap<Vehicle, City>();
-		while (!workingTaskList.isEmpty()) {
-			for (Vehicle vehicle : vehicles) {
-				// always ensure that there are tasks remaining in the list
-				// before continuing
-				if (workingTaskList.isEmpty()) {
-					break;
-				}
-
-				// don't even need to worry about capacity because the package
-				// is always dropped off first before picking up more!
-
-				boolean canChain = true;
-				int taskIndex = 0;
-				while (canChain) {
-
-					if (workingTaskList.isEmpty()) {
-						break;
-					}
-
-					Task task = workingTaskList.get(taskIndex);
-
-					ArrayList<TaskWrapper> taskWrappers = new ArrayList<TaskWrapper>();
-					taskWrappers.add(new TaskWrapper(task, true));// pickup
-					taskWrappers.add(new TaskWrapper(task, false));// delivery
-
-					if (simpleVehicleAgendas.containsKey(vehicle)) {
-						// if vehicle key already exists, append actions to
-						// current list
-						simpleVehicleAgendas.get(vehicle).addAll(taskWrappers);
-
-					} else {
-						// if key doesn't exist yet, initialize with a new
-						// arrayList
-						simpleVehicleAgendas.put(vehicle, taskWrappers);
-					}
-
-					vehicleCities.put(vehicle, task.deliveryCity);
-					workingTaskList.remove(taskIndex);
-
-					// see if there is a task that satisfies chaining here. If
-					// yes, keep canChain
-					// true
-					canChain = false;
-					for (Task testTask : workingTaskList) {
-						if (testTask.pickupCity == vehicleCities.get(vehicle)) {
-							canChain = true;
-							taskIndex = workingTaskList.indexOf(testTask);
-							break; // only take the first task satisfying the
-									// criteria
-						}
-					}
-				}
-			}
-		}
-		return new Solution(vehicles, simpleVehicleAgendas);
-	}
+//	private Solution selectInitialSolution(List<Vehicle> vehicles, TaskSet tasks) {
+//
+//		/*
+//		 * Pseudo code outline here: Trying to be more efficient here. while TaskSet
+//		 * contains tasks For vehicle : vehicles: assign head of task list to vehicle
+//		 * Repeat: if another task exists at destination city of this task, add next
+//		 * task Break if no task exists at destination city end end
+//		 */
+//
+//		ArrayList<Task> workingTaskList = new ArrayList<Task>();
+//		// store tasks in a more workable format
+//		for (Task task : tasks) {
+//			workingTaskList.add(task);
+//		}
+//
+//		// stores the action of the vehicle
+//		HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas = new HashMap<Vehicle, ArrayList<TaskWrapper>>();
+//
+//		// stores the location of the vehicle after the most recent action
+//		HashMap<Vehicle, City> vehicleCities = new HashMap<Vehicle, City>();
+//		while (!workingTaskList.isEmpty()) {
+//			for (Vehicle vehicle : vehicles) {
+//				// always ensure that there are tasks remaining in the list
+//				// before continuing
+//				if (workingTaskList.isEmpty()) {
+//					break;
+//				}
+//
+//				// don't even need to worry about capacity because the package
+//				// is always dropped off first before picking up more!
+//
+//				boolean canChain = true;
+//				int taskIndex = 0;
+//				while (canChain) {
+//
+//					if (workingTaskList.isEmpty()) {
+//						break;
+//					}
+//
+//					Task task = workingTaskList.get(taskIndex);
+//
+//					ArrayList<TaskWrapper> taskWrappers = new ArrayList<TaskWrapper>();
+//					taskWrappers.add(new TaskWrapper(task, true));// pickup
+//					taskWrappers.add(new TaskWrapper(task, false));// delivery
+//
+//					if (simpleVehicleAgendas.containsKey(vehicle)) {
+//						// if vehicle key already exists, append actions to
+//						// current list
+//						simpleVehicleAgendas.get(vehicle).addAll(taskWrappers);
+//
+//					} else {
+//						// if key doesn't exist yet, initialize with a new
+//						// arrayList
+//						simpleVehicleAgendas.put(vehicle, taskWrappers);
+//					}
+//
+//					vehicleCities.put(vehicle, task.deliveryCity);
+//					workingTaskList.remove(taskIndex);
+//
+//					// see if there is a task that satisfies chaining here. If
+//					// yes, keep canChain
+//					// true
+//					canChain = false;
+//					for (Task testTask : workingTaskList) {
+//						if (testTask.pickupCity == vehicleCities.get(vehicle)) {
+//							canChain = true;
+//							taskIndex = workingTaskList.indexOf(testTask);
+//							break; // only take the first task satisfying the
+//									// criteria
+//						}
+//					}
+//				}
+//			}
+//		}
+//		return new Solution(vehicles, simpleVehicleAgendas);
+//	}
 
 	private Solution selectInitialSolutionGreedy(List<Vehicle> vehicles, TaskSet tasks) {
 
