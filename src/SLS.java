@@ -27,7 +27,7 @@ public class SLS {
 		timeLimit -= 500; // The other way didn't work somehow - non-integer
 							// time maybe?
 
-		int selectInitial = 2;
+		int selectInitial = 3;
 		Solution solution = null;
 
 		switch (selectInitial) {
@@ -71,10 +71,6 @@ public class SLS {
 	public Solution getSolution() {
 		return this.solution;
 	}
-	
-	
-	
-	
 
 	/**
 	 * Take the first task that the vehicle will handle, and swap its positions
@@ -285,7 +281,9 @@ public class SLS {
 
 			// make sure we got rid of the pickup and delivery
 			assert (simpleChosenVehicleAgenda.size() == simpleVehicleAgendas.get(chosenVehicle).size() - 2); // TODO:
-																												// shouldnt																								// testing)
+																												// shouldnt
+																												// //
+																												// testing)
 
 			for (Vehicle vehicle : vehicles) {
 
@@ -386,9 +384,9 @@ public class SLS {
 
 	/**
 	 * Randomly choose a task handled by v1 and transfer it to v2. Then, randomly
-	 * choose where to put the pickup and delivery of the task in v2. 
-	 * If v1 doesn't handle at least one task, an empty list is returned
-	 * If v2 cannot handle the new task, an empty list is returned
+	 * choose where to put the pickup and delivery of the task in v2. If v1 doesn't
+	 * handle at least one task, an empty list is returned If v2 cannot handle the
+	 * new task, an empty list is returned
 	 * 
 	 * @param v1
 	 * @param v2
@@ -397,11 +395,11 @@ public class SLS {
 	 */
 	public ArrayList<Solution> transferRandomTask(Vehicle v1, Vehicle v2,
 			HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
-		
+
 		assert !simpleVehicleAgendas.get(v1).isEmpty(); // v1 needs to handle at least one task.
 
-		ArrayList<Solution> solutions = new  ArrayList<Solution>();
-		
+		ArrayList<Solution> solutions = new ArrayList<Solution>();
+
 		if (simpleVehicleAgendas.get(v1).size() > 0) {
 			// Randomly choose a task amongst the tasks v1 handles
 			Random rand = new Random();
@@ -418,9 +416,9 @@ public class SLS {
 				newPickupPos = 0;
 				newDeliveryPos = 1;
 			}
-			solutions.addAll(this.transferTask(v1, v2, taskToTransfer, newPickupPos, newDeliveryPos, simpleVehicleAgendas));
+			solutions.addAll(
+					this.transferTask(v1, v2, taskToTransfer, newPickupPos, newDeliveryPos, simpleVehicleAgendas));
 
-			
 		}
 
 		return solutions;
@@ -428,9 +426,8 @@ public class SLS {
 
 	/**
 	 * Create solutions by transferring a randomly picked task (amongst the ones in
-	 * v1) to the vehicles in simpleVehicleAgendas 
-	 * v1 needs to handle at least one task !
-	 * It creates NUMBER_OF_VEHICLES * numberOfRandomTransferPerVehicle tasks
+	 * v1) to the vehicles in simpleVehicleAgendas v1 needs to handle at least one
+	 * task ! It creates NUMBER_OF_VEHICLES * numberOfRandomTransferPerVehicle tasks
 	 * 
 	 * @param chosenVehicle
 	 * @param simpleVehicleAgendas
@@ -460,16 +457,17 @@ public class SLS {
 
 		return solutions;
 	}
-	
+
 	/**
-	 * Swap every task carried by v1. 
+	 * Swap every task carried by v1.
+	 * 
 	 * @param v1
 	 * @param simpleVehicleAgendas
 	 * @return
 	 */
 	public ArrayList<Solution> swapAllTasks(Vehicle v1, HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
 		ArrayList<Solution> solutions = new ArrayList<Solution>();
-		
+
 		// Compute all the tasks handled by v1
 		ArrayList<Task> tasks = new ArrayList<Task>();
 		for (TaskWrapper tw : simpleVehicleAgendas.get(v1)) {
@@ -477,27 +475,28 @@ public class SLS {
 				tasks.add(tw.getTask());
 			}
 		}
-		
+
 		for (int i = 0; i < tasks.size(); i++) {
 			for (int j = i + 1; j < tasks.size(); j++) {
 				solutions.add(this.swapTwoTasks(v1, tasks.get(i), tasks.get(j), simpleVehicleAgendas));
 			}
 		}
-		
+
 		return solutions;
 
 	}
-	
+
 	/**
-	 * For every task handled by v1, transfer it to EVERY other vehicle.
-	 * Put the pickup and delivery in ANY place allowed.
-	 * Check for carriability
+	 * For every task handled by v1, transfer it to EVERY other vehicle. Put the
+	 * pickup and delivery in ANY place allowed. Check for carriability
+	 * 
 	 * @param s
 	 * @return
 	 */
-	public ArrayList<Solution> transferAllTasksToAllVehicles(Vehicle v1, HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
+	public ArrayList<Solution> transferAllTasksToAllVehicles(Vehicle v1,
+			HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
 		ArrayList<Solution> solutions = new ArrayList<Solution>();
-		
+
 		// Compute all the tasks handled by v1
 		ArrayList<Task> tasks = new ArrayList<Task>();
 		for (TaskWrapper tw : simpleVehicleAgendas.get(v1)) {
@@ -505,7 +504,7 @@ public class SLS {
 				tasks.add(tw.getTask());
 			}
 		}
-		
+
 		// List all the vehicles, but v1
 		ArrayList<Vehicle> vehicles = new ArrayList<Vehicle>();
 		for (Vehicle v : simpleVehicleAgendas.keySet()) {
@@ -513,7 +512,7 @@ public class SLS {
 				vehicles.add(v);
 			}
 		}
-		
+
 		for (Task t : tasks) {
 			for (Vehicle v2 : vehicles) {
 				int maxPickup = simpleVehicleAgendas.get(v2).size();
@@ -524,7 +523,7 @@ public class SLS {
 				}
 			}
 		}
-		
+
 		return solutions;
 	}
 
@@ -749,15 +748,25 @@ public class SLS {
 			taskWrappers.add(new TaskWrapper(task, true));// pickup
 			taskWrappers.add(new TaskWrapper(task, false));// delivery
 
-			if (simpleVehicleAgendas.containsKey(vehicles.get(0))) {
+			
+			// Find the first vehicle that can carry the task
+			Vehicle vehicle = null;
+			for (Vehicle v : vehicles) {
+				if (v.capacity() >= task.weight) {
+					vehicle = v;
+					break;
+				}
+			}
+			
+			if (simpleVehicleAgendas.containsKey(vehicle)) {
 				// if vehicle key already exists, append actions to
 				// current list
-				simpleVehicleAgendas.get(vehicles.get(0)).addAll(taskWrappers);
+				simpleVehicleAgendas.get(vehicle).addAll(taskWrappers);
 
 			} else {
 				// if key doesn't exist yet, initialize with a new
 				// arrayList
-				simpleVehicleAgendas.put(vehicles.get(0), taskWrappers);
+				simpleVehicleAgendas.put(vehicle, taskWrappers);
 			}
 			pickupTaskList.remove(0);
 		}
@@ -816,14 +825,11 @@ public class SLS {
 		} else {
 			solutions.addAll(this.swapAllTasks(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
 		}
-		
 
 		// !IDEA 2
 
 		return solutions;
 	}
-	
-
 
 	/**
 	 * 
