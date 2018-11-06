@@ -30,3 +30,4 @@ report/*.gz
 
 # History of the last run
 history.xml
+/bin/
