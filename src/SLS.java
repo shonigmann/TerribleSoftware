@@ -120,6 +120,9 @@ public class SLS {
 
 		// Creation of v2's simple agenda AFTER the transfer
 		ArrayList<TaskWrapper> v2Agenda = (ArrayList<TaskWrapper>) newSimpleVehicleAgendas.get(v2).clone();
+		if (v1 == v2) {
+			v2Agenda = (ArrayList<TaskWrapper>) v1Agenda.clone();
+		}
 
 		// Adding of the pickup of task t
 		if (newPickupPos < v2Agenda.size()) {
@@ -174,7 +177,7 @@ public class SLS {
 		}
 
 		for (Task t : tasks) {
-			for (Vehicle v2 : vehicles) {
+			for (Vehicle v2 : simpleVehicleAgendas.keySet()) {
 				int maxPickup = simpleVehicleAgendas.get(v2).size();
 				for (int pickup = 0; pickup <= maxPickup; pickup++) {
 					for (int delivery = pickup + 1; delivery <= maxPickup + 1; delivery++) {
@@ -412,21 +415,18 @@ public class SLS {
 		ArrayList<Solution> solutions = new ArrayList<Solution>();
 		ArrayList<Vehicle> vehicles = (ArrayList<Vehicle>) oldSolution.getVehicles().clone();
 
-		if (vehicles.size() > 1) {
-			// Remove all the vehicles with no tasks
-			for (Vehicle v : (ArrayList<Vehicle>) vehicles.clone()) {
-				if (oldSolution.getSimpleVehicleAgendas().get(v).isEmpty()) {
-					vehicles.remove(v);
-				}
+		// Remove all the vehicles with no tasks
+		for (Vehicle v : (ArrayList<Vehicle>) vehicles.clone()) {
+			if (oldSolution.getSimpleVehicleAgendas().get(v).isEmpty()) {
+				vehicles.remove(v);
 			}
-			
-			Random rand = new Random();
-			Vehicle chosenVehicle = vehicles.get(rand.nextInt(vehicles.size()));
-
-			solutions.addAll(this.transferAllTasksToAllVehicles(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
-		} else {
-			solutions.addAll(this.swap)
 		}
+		
+		Random rand = new Random();
+		Vehicle chosenVehicle = vehicles.get(rand.nextInt(vehicles.size()));
+
+		solutions.addAll(this.transferAllTasksToAllVehicles(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
+		
 		return solutions;
 	}
 
