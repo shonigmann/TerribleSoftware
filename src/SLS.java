@@ -752,6 +752,10 @@ public class SLS {
 					break;
 				}
 			}
+			
+			if (vehicle == null) {
+				throw new IllegalArgumentException("There is a task that cannot be carried by any of the vehicle.");
+			}
 
 			if (simpleVehicleAgendas.containsKey(vehicle)) {
 				// if vehicle key already exists, append actions to
