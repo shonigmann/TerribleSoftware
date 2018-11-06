@@ -1,7 +1,6 @@
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
@@ -13,13 +12,17 @@ import logist.topology.Topology.City;
 public class SLS {
 	private final long startTime;
 	private long currentTime;
-	private Solution solution;
+	private Solution solution; // currently best solution we've seen
 
 	private final double P_LOWER = 0.5;
-	private final double P_UPPER = 1;
+	private final double P_UPPER = 1; 
 
 	private int repeatCount = 0;
-	private final int MAX_REPEAT = 10;
+	/* 
+	 * If the same local minimum is found MAX_REPEAT times in a row,
+	 * a neighbor is randomly selected
+	 */
+	private final int MAX_REPEAT = 10; 
 
 	public SLS(List<Vehicle> vehicles, TaskSet tasks, long timeLimit) {
 		this.startTime = System.currentTimeMillis();
@@ -435,6 +438,10 @@ public class SLS {
 		Random rand = new Random();
 		double x = rand.nextDouble();
 
+		/* 
+		 * If the same local minimum is found MAX_REPEAT times in a row,
+		 * a neighbor is randomly selected
+		 */
 		if (repeatCount >= this.MAX_REPEAT) {
 			int y = rand.nextInt(neighbors.size());
 			this.repeatCount = 0;
