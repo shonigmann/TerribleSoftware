@@ -71,6 +71,10 @@ public class SLS {
 	public Solution getSolution() {
 		return this.solution;
 	}
+	
+	
+	
+	
 
 	/**
 	 * Take the first task that the vehicle will handle, and swap its positions
@@ -333,7 +337,7 @@ public class SLS {
 	 * @param newPickupPos
 	 * @param newDeliveryPos
 	 * @param simpleVehicleAgendas
-	 * @return
+	 * @return a list of solutions with ONE solution
 	 */
 	public ArrayList<Solution> transferTask(Vehicle v1, Vehicle v2, Task t, int newPickupPos, int newDeliveryPos,
 			HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
@@ -348,12 +352,12 @@ public class SLS {
 				.clone();
 
 		// Creation of v1's simple agenda AFTER the transfer
-		ArrayList<TaskWrapper> v1Agenda = newSimpleVehicleAgendas.get(v1);
+		ArrayList<TaskWrapper> v1Agenda = (ArrayList<TaskWrapper>) newSimpleVehicleAgendas.get(v1).clone();
 		v1Agenda.remove(new TaskWrapper(t, true));
 		v1Agenda.remove(new TaskWrapper(t, false));
 
 		// Creation of v2's simple agenda AFTER the transfer
-		ArrayList<TaskWrapper> v2Agenda = newSimpleVehicleAgendas.get(v2);
+		ArrayList<TaskWrapper> v2Agenda = (ArrayList<TaskWrapper>) newSimpleVehicleAgendas.get(v2).clone();
 
 		// Adding of the pickup of task t
 		if (newPickupPos < v2Agenda.size()) {
@@ -405,9 +409,18 @@ public class SLS {
 			Task taskToTransfer = simpleVehicleAgendas.get(v1).get(randomTaskWrapperIndex).getTask();
 
 			// Randomly choose where to put it in v2
-			int newPickupPos = rand.nextInt(simpleVehicleAgendas.get(v2).size());
-			int newDeliveryPos = rand.nextInt(simpleVehicleAgendas.get(v2).size() - newPickupPos) + newPickupPos + 1;
+			int newPickupPos = -1;
+			int newDeliveryPos = -1;
+			if (simpleVehicleAgendas.get(v2).size() > 0) {
+				newPickupPos = rand.nextInt(simpleVehicleAgendas.get(v2).size());
+				newDeliveryPos = rand.nextInt(simpleVehicleAgendas.get(v2).size() - newPickupPos) + newPickupPos + 1;
+			} else {
+				newPickupPos = 0;
+				newDeliveryPos = 1;
+			}
 			solutions.addAll(this.transferTask(v1, v2, taskToTransfer, newPickupPos, newDeliveryPos, simpleVehicleAgendas));
+
+			
 		}
 
 		return solutions;
@@ -417,13 +430,14 @@ public class SLS {
 	 * Create solutions by transferring a randomly picked task (amongst the ones in
 	 * v1) to the vehicles in simpleVehicleAgendas 
 	 * v1 needs to handle at least one task !
+	 * It creates NUMBER_OF_VEHICLES * numberOfRandomTransferPerVehicle tasks
 	 * 
 	 * @param chosenVehicle
 	 * @param simpleVehicleAgendas
 	 * @return
 	 */
 	public ArrayList<Solution> transferRandomTasks(Vehicle v1,
-			HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
+			HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas, int numberOfRandomTransferPerVehicle) {
 
 		ArrayList<Solution> solutions = new ArrayList<Solution>();
 
@@ -439,13 +453,51 @@ public class SLS {
 
 		for (Vehicle v2 : vehicles) {
 
-			// Create one solution per place where you can append the
-			// delivery
-			for (int i = 1; i <= simpleVehicleAgendas.get(v2).size(); i++) {
+			for (int i = 0; i <= numberOfRandomTransferPerVehicle; i++) {
 				solutions.addAll(this.transferRandomTask(v1, v2, simpleVehicleAgendas));
 			}
 		}
 
+		return solutions;
+	}
+	
+	/**
+	 * For every task handled by v1, transfer it to EVERY other vehicle.
+	 * Put the pickup and delivery in ANY place allowed.
+	 * Check for carriability
+	 * @param s
+	 * @return
+	 */
+	public ArrayList<Solution> transferAllTasksToAllVehicles(Vehicle v1, HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
+		ArrayList<Solution> solutions = new ArrayList<Solution>();
+		
+		// Compute all the tasks handled by v1
+		ArrayList<Task> tasks = new ArrayList<Task>();
+		for (TaskWrapper tw : simpleVehicleAgendas.get(v1)) {
+			if (tw.isPickup()) {
+				tasks.add(tw.getTask());
+			}
+		}
+		
+		// List all the vehicles, but v1
+		ArrayList<Vehicle> vehicles = new ArrayList<Vehicle>();
+		for (Vehicle v : simpleVehicleAgendas.keySet()) {
+			if (v != v1) {
+				vehicles.add(v);
+			}
+		}
+		
+		for (Task t : tasks) {
+			for (Vehicle v2 : vehicles) {
+				int maxPickup = simpleVehicleAgendas.get(v2).size();
+				for (int pickup = 0; pickup <= maxPickup; pickup++) {
+					for (int delivery = pickup + 1; delivery <= maxPickup + 1; delivery++) {
+						solutions.addAll(this.transferTask(v1, v2, t, pickup, delivery, simpleVehicleAgendas));
+					}
+				}
+			}
+		}
+		
 		return solutions;
 	}
 
@@ -730,18 +782,21 @@ public class SLS {
 			}
 		}
 		Vehicle chosenVehicle = vehicles.get(0);
-
 		Collections.shuffle(vehicles);
-		solutions.addAll(this.transferRandomTasks(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
 
-		solutions.addAll(this.swapFirstTask(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
-
+		if (Math.random() < 1) {
+			solutions.addAll(this.transferAllTasksToAllVehicles(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
+		} else {
+			solutions.addAll(this.swapFirstTask(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
+		}
 		
 
 		// !IDEA 2
 
 		return solutions;
 	}
+	
+
 
 	/**
 	 * 
