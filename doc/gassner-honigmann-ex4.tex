@@ -27,7 +27,7 @@
 \section{Solution Representation}
 \subsection{Variables}
 % Describe the variables used in your solution representation %
-A \texttt{Solution} class was created to better store and manage information for each potential delivery solution. A \texttt{Solution} object consists of a \texttt{HashMap} of \texttt{Vehicle}s as key and \texttt{ArrayList}s of \texttt{Action}s as value, also called an agenda. A reduced version of each agenda, which simply includes information for whether the task is to be picked up or delivered and where, in the order in which the vehicle is supposed to perform those actions is also stored in the \texttt{Solution}. Finally, the texttt{Solution} has a method, which can convert the simplified list of pick-ups and drop-offs into a complete action list suitable for Plan generation.
+A \texttt{Solution} class was created to better store and manage information for each potential delivery solution. A \texttt{Solution} object consists of a \texttt{HashMap} of \texttt{Vehicle}s as key and \texttt{ArrayList}s of \texttt{Action}s as value, also called an agenda. A reduced version of each agenda, which simply includes information for whether the task is to be picked up or delivered and where, in the order in which the vehicle is supposed to perform those actions is also stored in the \texttt{Solution}. Finally, the \texttt{Solution} has a method, which can convert the simplified list of pick-ups and drop-offs into a complete action list suitable for Plan generation.
 
 \subsection{Constraints}
 % Describe the constraints in your solution representation %
@@ -98,7 +98,7 @@ As is shown in the table, \texttt{MAX\_REPEAT} and \texttt{P\_Lower} strongly in
 In this experiment, we wanted to compare the efficiencies of different numbers of vehicles to see how evenly distributed tasks were among the vehicles. 
 \subsubsection{Setting}
 % Describe the settings of your experiment: topology, task configuration, number of tasks, number of vehicles, etc. %
-Settings for this experiment are specified in \texttt{E2\_centralized.xml} and \texttt{E1\_settings\_default.xml}. We run the experiment for 1, 4 and 10 vehicles, each time with 5 and 30 tasks.\\
+Settings for this experiment are specified in \texttt{E2\_centralized.xml} and \texttt{E1\_settings\_default.xml}. We run the experiment for 4 and 10 vehicles, each time with 5 and 30 tasks.\\
 
 
 \subsubsection{Observations}
