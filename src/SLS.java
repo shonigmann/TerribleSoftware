@@ -14,7 +14,7 @@ public class SLS {
 	private long currentTime;
 	private Solution solution; // currently best solution we've seen
 
-	private final double P_LOWER = 0.5;
+	private final double P_LOWER = 0.1;
 	private final double P_UPPER = 1; 
 
 	private int repeatCount = 0;
@@ -22,7 +22,7 @@ public class SLS {
 	 * If the same local minimum is found MAX_REPEAT times in a row,
 	 * a neighbor is randomly selected
 	 */
-	private final int MAX_REPEAT = 10; 
+	private final int MAX_REPEAT = 2; 
 
 	public SLS(List<Vehicle> vehicles, TaskSet tasks, long timeLimit) {
 		this.startTime = System.currentTimeMillis();
@@ -454,7 +454,7 @@ public class SLS {
 			}
 			// if random number is between P_lower and P_upper, return the old
 			// solution
-			else if (x < P_UPPER) {
+			else if (x <= P_UPPER) {
 				return homeSolution;
 			}
 			// if the random number is above P_upper, return a random neighbor
