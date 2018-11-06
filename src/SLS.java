@@ -462,6 +462,33 @@ public class SLS {
 	}
 	
 	/**
+	 * Swap every task carried by v1. 
+	 * @param v1
+	 * @param simpleVehicleAgendas
+	 * @return
+	 */
+	public ArrayList<Solution> swapAllTasks(Vehicle v1, HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas) {
+		ArrayList<Solution> solutions = new ArrayList<Solution>();
+		
+		// Compute all the tasks handled by v1
+		ArrayList<Task> tasks = new ArrayList<Task>();
+		for (TaskWrapper tw : simpleVehicleAgendas.get(v1)) {
+			if (tw.isPickup()) {
+				tasks.add(tw.getTask());
+			}
+		}
+		
+		for (int i = 0; i < tasks.size(); i++) {
+			for (int j = i + 1; j < tasks.size(); j++) {
+				solutions.add(this.swapTwoTasks(v1, tasks.get(i), tasks.get(j), simpleVehicleAgendas));
+			}
+		}
+		
+		return solutions;
+
+	}
+	
+	/**
 	 * For every task handled by v1, transfer it to EVERY other vehicle.
 	 * Put the pickup and delivery in ANY place allowed.
 	 * Check for carriability
@@ -784,10 +811,10 @@ public class SLS {
 		Vehicle chosenVehicle = vehicles.get(0);
 		Collections.shuffle(vehicles);
 
-		if (Math.random() < 1) {
+		if (Math.random() < 1.0) {
 			solutions.addAll(this.transferAllTasksToAllVehicles(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
 		} else {
-			solutions.addAll(this.swapFirstTask(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
+			solutions.addAll(this.swapAllTasks(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
 		}
 		
 

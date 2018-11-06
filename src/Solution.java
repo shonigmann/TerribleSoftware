@@ -59,7 +59,7 @@ public class Solution {
 			
 			City fromCity = vehicle.getCurrentCity();
 
-			for (int i = 0;i < this.simpleVehicleAgendas.get(vehicle).size() - 1;i++) {
+			for (int i = 0;i < this.simpleVehicleAgendas.get(vehicle).size();i++) {
 				City toCity = this.simpleVehicleAgendas.get(vehicle).get(i).getEndCity();
 				totalDistanceOfThisVehicle += fromCity.distanceTo(toCity);
 				fromCity = toCity;
