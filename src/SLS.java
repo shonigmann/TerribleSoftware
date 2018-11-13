@@ -82,16 +82,17 @@ public class SLS {
 
 			// Choose which solution to use to generate neighbors
 			solutionGeneratingNeighbors = this.localChoice(neighbors, localMins.getFirstSolution(), solutionGeneratingNeighbors);
-
+			
+			
+			System.out.print("Costs : ");
+			for (Solution s : this.solutions.getAll()) {
+				System.out.print(s.totalCost);
+				System.out.print(" - ");
+			}
+			System.out.println();
+			
 			diffTime = System.currentTimeMillis() - this.startTime;
 		}
-		
-		System.out.print("Costs : ");
-		for (Solution s : this.solutions.getAll()) {
-			System.out.print(s.totalCost);
-			System.out.print(" - ");
-		}
-		System.out.println();
 
 	}
 

@@ -67,19 +67,21 @@ public class SolutionList {
 		 *  Add s where it belongs (if it can be added)
 		 */
 		
-		if (this.solutions.size() == 0) {
-			this.solutions.add(s);
-		} else if (!this.solutions.contains(s)) {
+		if (!this.solutions.contains(s)) {
 			// From right to left
-			for (int i = this.solutions.size() - 1; i >= 0; i--) {
-				if (this.solutions.get(i).totalCost <= s.totalCost) {
+			for (int i = this.solutions.size() - 1; i >= -1; i--) {
+				if  (i == -1) {
+					this.solutions.add(0, s);
+					solutionAdded = true;
+					break;
+				}
+				else if (this.solutions.get(i).totalCost <= s.totalCost) {
 					this.solutions.add(i + 1, s);
 					solutionAdded = true;
 					break;
 				}
 			}
 		}
-
 		
 		// Trim this.solutions
 		if (this.solutions.size() > this.maxAmountOfSolutions) {
