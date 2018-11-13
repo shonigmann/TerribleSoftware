@@ -81,10 +81,10 @@ public class Solution {
 			City origin = vehicle.getCurrentCity();
 			for(TaskWrapper task : simpleTaskList){
 				if(completeVehicleAgenda.containsKey(vehicle)){
-					completeVehicleAgenda.get(vehicle).addAll(getTaskActions(origin,task));	
+					completeVehicleAgenda.get(vehicle).addAll(this.getAgenda(origin,task));	
 				}
 				else{
-					completeVehicleAgenda.put(vehicle,getTaskActions(origin,task));		
+					completeVehicleAgenda.put(vehicle,this.getAgenda(origin,task));		
 				}
 				origin = task.getEndCity();
 			}
@@ -101,7 +101,7 @@ public class Solution {
 	 * of the actions needed to go from origin 
 	 * and then perform the action related to task
 	 */
-	private ArrayList<Action> getTaskActions(City origin, TaskWrapper task) {
+	private ArrayList<Action> getAgenda(City origin, TaskWrapper task) {
 
 		ArrayList<Action> actions = new ArrayList<Action>();
 		ArrayList<City> pathCities = (ArrayList<City>) origin.pathTo(task.getEndCity());
