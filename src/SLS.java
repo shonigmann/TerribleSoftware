@@ -43,25 +43,36 @@ public class SLS {
 			break;
 		}
 
-		Solution homeSolution = solution; // stores current solution used to
+		Solution solutionGeneratingNeighbors = this.solution; // stores current solution used to
 											// generate neighbors
-		Solution localMin = solution; // stores the current local minimum
+		Solution localMin = this.solution; // stores the solution with the lowest cost we've encountered
 
 		double diffTime = this.currentTime - this.startTime;
 		System.out.println("The time limit is " + timeLimit);
 		while (diffTime < timeLimit) { // TODO make sure this timing works for
 										// edge cases (what about stopping
 										// slightly before)
-			ArrayList<Solution> neighbors = this.chooseNeighbours(homeSolution);
-			neighbors.add(0, homeSolution); // current solution kept in case
-											// nothing is better
-			localMin = this.getLocalMin(neighbors);// stores the local minimum
-													// from the current set of
-													// neighbors
+			
+			// Generate neighbors
+			ArrayList<Solution> neighbors = this.generateNeighbours(solutionGeneratingNeighbors);
+			neighbors.add(0, solutionGeneratingNeighbors); // current solution generating neighbors kept in case nothing is better
+			
+			// Find neighbor with lowest cost
+			localMin = this.getLocalMin(neighbors);// stores the local minimum from the current set of neighbors
 
-			homeSolution = this.localChoice(neighbors, localMin, homeSolution);
-
+			// If we've never seen a solution with such a low cost, store it
+			if (localMin.totalCost < this.solution.totalCost) {
+				this.solution = localMin;
+				this.repeatCount = 0;
+			} else {
+				this.repeatCount++;
+			}
+			
+			// Choose which solution to use to generate neighbors
+			solutionGeneratingNeighbors = this.localChoice(neighbors, localMin, solutionGeneratingNeighbors);
+			
 			diffTime = System.currentTimeMillis() - this.startTime;
+			System.out.println(this.solution.totalCost);
 		}
 		System.out.println("SLS constructed");
 
@@ -279,84 +290,6 @@ public class SLS {
 		return new Solution(simpleVehicleAgendas);
 	}
 
-	
-//	private Solution selectInitialSolution(List<Vehicle> vehicles, TaskSet tasks) {
-//
-//		/*
-//		 * Pseudo code outline here: Trying to be more efficient here. while TaskSet
-//		 * contains tasks For vehicle : vehicles: assign head of task list to vehicle
-//		 * Repeat: if another task exists at destination city of this task, add next
-//		 * task Break if no task exists at destination city end end
-//		 */
-//
-//		ArrayList<Task> workingTaskList = new ArrayList<Task>();
-//		// store tasks in a more workable format
-//		for (Task task : tasks) {
-//			workingTaskList.add(task);
-//		}
-//
-//		// stores the action of the vehicle
-//		HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas = new HashMap<Vehicle, ArrayList<TaskWrapper>>();
-//
-//		// stores the location of the vehicle after the most recent action
-//		HashMap<Vehicle, City> vehicleCities = new HashMap<Vehicle, City>();
-//		while (!workingTaskList.isEmpty()) {
-//			for (Vehicle vehicle : vehicles) {
-//				// always ensure that there are tasks remaining in the list
-//				// before continuing
-//				if (workingTaskList.isEmpty()) {
-//					break;
-//				}
-//
-//				// don't even need to worry about capacity because the package
-//				// is always dropped off first before picking up more!
-//
-//				boolean canChain = true;
-//				int taskIndex = 0;
-//				while (canChain) {
-//
-//					if (workingTaskList.isEmpty()) {
-//						break;
-//					}
-//
-//					Task task = workingTaskList.get(taskIndex);
-//
-//					ArrayList<TaskWrapper> taskWrappers = new ArrayList<TaskWrapper>();
-//					taskWrappers.add(new TaskWrapper(task, true));// pickup
-//					taskWrappers.add(new TaskWrapper(task, false));// delivery
-//
-//					if (simpleVehicleAgendas.containsKey(vehicle)) {
-//						// if vehicle key already exists, append actions to
-//						// current list
-//						simpleVehicleAgendas.get(vehicle).addAll(taskWrappers);
-//
-//					} else {
-//						// if key doesn't exist yet, initialize with a new
-//						// arrayList
-//						simpleVehicleAgendas.put(vehicle, taskWrappers);
-//					}
-//
-//					vehicleCities.put(vehicle, task.deliveryCity);
-//					workingTaskList.remove(taskIndex);
-//
-//					// see if there is a task that satisfies chaining here. If
-//					// yes, keep canChain
-//					// true
-//					canChain = false;
-//					for (Task testTask : workingTaskList) {
-//						if (testTask.pickupCity == vehicleCities.get(vehicle)) {
-//							canChain = true;
-//							taskIndex = workingTaskList.indexOf(testTask);
-//							break; // only take the first task satisfying the
-//									// criteria
-//						}
-//					}
-//				}
-//			}
-//		}
-//		return new Solution(vehicles, simpleVehicleAgendas);
-//	}
-
 	private Solution selectInitialSolutionGreedy(List<Vehicle> vehicles, TaskSet tasks) {
 
 		ArrayList<Task> pickupTaskList = new ArrayList<Task>();
@@ -411,7 +344,7 @@ public class SLS {
 	}
 
 	@SuppressWarnings("unchecked")
-	private ArrayList<Solution> chooseNeighbours(Solution oldSolution) {
+	private ArrayList<Solution> generateNeighbours(Solution oldSolution) {
 		ArrayList<Solution> solutions = new ArrayList<Solution>();
 		ArrayList<Vehicle> vehicles = (ArrayList<Vehicle>) oldSolution.getVehicles().clone();
 
@@ -479,6 +412,7 @@ public class SLS {
 		double localMinSolutionTotalCost = Double.POSITIVE_INFINITY;
 		Solution localMinSolution = null;
 
+		// Find the solution amongst solutions with the lowest total cost
 		for (Solution solution : solutions) {
 			double solutionTotalCost = solution.totalCost;
 			if (solutionTotalCost < localMinSolutionTotalCost) {
@@ -486,18 +420,6 @@ public class SLS {
 				localMinSolutionTotalCost = solutionTotalCost;
 			}
 		}
-
-		if (localMinSolution.totalCost < this.solution.totalCost) {
-			solution = localMinSolution; // store optimal solution if local min
-											// trumps current optimal. Only
-											// return local min.
-			this.repeatCount = 0;
-		} else {
-			this.repeatCount++;
-		}
-		//used for debugging
-		// System.out.println("BEST SOLUTION COST: " + this.solution.totalCost + "; LOCAL CHOICE COSTS : " + localMinSolutionTotalCost+ "; Chosen from " + Integer.toString(solutions.size()) + " possible neighbors");
-
 		return localMinSolution;
 	}
 
