@@ -134,5 +134,12 @@ public class Solution {
 		}
 		return tasksOfThisVehicle;
 	}
-
+	
+	 @Override
+	 public boolean equals(Object that) {
+		 if (!(that instanceof Solution)) 
+			 return false;
+		 Solution s = (Solution) that;
+		 return s.simpleVehicleAgendas == this.simpleVehicleAgendas;
+	 }
 }

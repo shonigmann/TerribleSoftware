@@ -62,8 +62,8 @@ public class Centralized implements CentralizedBehavior {
         long time_start = System.currentTimeMillis();
         
 //		System.out.println("Agent " + agent.id() + " has tasks " + tasks);
-        SLS sls = new SLS(vehicles, tasks, this.timeout_plan);
-        Solution solution = sls.getSolution();
+        SLS sls = new SLS(vehicles, tasks, this.timeout_plan, 10);
+        Solution solution = sls.getSolutions().getFirstSolution();
         
         List<Plan> plans = new ArrayList<Plan>();
     	HashMap<Vehicle,ArrayList<Action>> vehicleAgendas = solution.getVehicleAgendas();

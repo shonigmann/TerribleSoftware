@@ -12,74 +12,91 @@ import logist.topology.Topology.City;
 public class SLS {
 	private final long startTime;
 	private long currentTime;
-	private Solution solution; // currently best solution we've seen
-
+	/*
+	 * List of the best solutions we've seen. The first element is the one with the
+	 * lowest cost
+	 */
+	private SolutionList solutions;
+	private final int amountBestSolutions; // How many "best solutions" we're keeping, i.e. the size of solutions
 	private final double P_LOWER = 1;
-	private final double P_UPPER = 1; 
+	private final double P_UPPER = 1;
 
 	private int repeatCount = 0;
-	/* 
-	 * If the same local minimum is found MAX_REPEAT times in a row,
-	 * a neighbor is randomly selected
+	/*
+	 * If the same local minimum is found MAX_REPEAT times in a row, a neighbor is
+	 * randomly selected
 	 */
-	private final int MAX_REPEAT = 10; 
+	private final int MAX_REPEAT = 10;
 
-	public SLS(List<Vehicle> vehicles, TaskSet tasks, long timeLimit) {
+	public SLS(List<Vehicle> vehicles, TaskSet tasks, long timeLimit, int amountBestSolutions) {
 		this.startTime = System.currentTimeMillis();
 		this.currentTime = System.currentTimeMillis();
-
+		this.amountBestSolutions = amountBestSolutions;
 		// Discount the time limit to ensure that a solution is returned
 		timeLimit -= 500; // The other way didn't work somehow - non-integer
 							// time maybe?
 
-		int selectInitial = 1;
+		// Initialize the solutions
+		this.solutions = new SolutionList(amountBestSolutions);
 
-		switch (selectInitial) {
+		// Generate the first solution
+		int generateInitial = 1;
+		switch (generateInitial) {
 		case 1:
-			this.solution = selectInitialSolutionNaive(vehicles, tasks);
+			this.solutions.add(generateInitialSolutionNaive(vehicles, tasks));
 			break;
 		case 2:
-			this.solution = selectInitialSolutionGreedy(vehicles, tasks);
+			this.solutions.add(generateInitialSolutionGreedy(vehicles, tasks));
 			break;
 		}
 
-		Solution solutionGeneratingNeighbors = this.solution; // stores current solution used to
-											// generate neighbors
-		Solution localMin = this.solution; // stores the solution with the lowest cost we've encountered
+		SolutionList localMins = this.solutions; // stores the solutions with the lowest cost we've encountered
+
+		// This is the solution that will be used to generate neighbors
+		Solution solutionGeneratingNeighbors = this.solutions.getFirstSolution();
 
 		double diffTime = this.currentTime - this.startTime;
 		System.out.println("The time limit is " + timeLimit);
-		while (diffTime < timeLimit) { // TODO make sure this timing works for
-										// edge cases (what about stopping
-										// slightly before)
-			
+		while (diffTime < timeLimit) {
+
 			// Generate neighbors
 			ArrayList<Solution> neighbors = this.generateNeighbours(solutionGeneratingNeighbors);
-			neighbors.add(0, solutionGeneratingNeighbors); // current solution generating neighbors kept in case nothing is better
-			
-			// Find neighbor with lowest cost
-			localMin = this.getLocalMin(neighbors);// stores the local minimum from the current set of neighbors
+			neighbors.add(0, solutionGeneratingNeighbors); // current solution generating neighbors kept in case nothing
+															// is better
 
-			// If we've never seen a solution with such a low cost, store it
-			if (localMin.totalCost < this.solution.totalCost) {
-				this.solution = localMin;
+			// Find this.amountBestSolutions neighbors with the lowest costs
+			localMins = this.getLocalMin(neighbors, this.amountBestSolutions);
+			
+			/*
+			 * If the solution within the neighbors with the lowest cost has a cost <=
+			 * than the cost of the solution within this.solutions with the highest cost,
+			 * then we need to merge localMins INTO this.solutions
+			 */
+			if (localMins.getFirstSolution().totalCost <= this.solutions.getLastSolution().totalCost) {
+				// Merge localMins and this.solutions
+				this.solutions.addAll(localMins.getAll());
 				this.repeatCount = 0;
 			} else {
 				this.repeatCount++;
 			}
-			
+
 			// Choose which solution to use to generate neighbors
-			solutionGeneratingNeighbors = this.localChoice(neighbors, localMin, solutionGeneratingNeighbors);
-			
+			solutionGeneratingNeighbors = this.localChoice(neighbors, localMins.getFirstSolution(), solutionGeneratingNeighbors);
+
 			diffTime = System.currentTimeMillis() - this.startTime;
-			System.out.println(this.solution.totalCost);
 		}
-		System.out.println("SLS constructed");
+		
+		System.out.print("Costs : ");
+		for (Solution s : this.solutions.getAll()) {
+			System.out.print(s.totalCost);
+			System.out.print(" - ");
+		}
+		System.out.println();
 
 	}
 
-	public Solution getSolution() {
-		return this.solution;
+	public SolutionList getSolutions() {
+		return this.solutions;
 	}
 
 	/**
@@ -244,7 +261,7 @@ public class SLS {
 	/*
 	 * Just assign tasks to vehicles one by one, no thinking about it
 	 */
-	private Solution selectInitialSolutionNaive(List<Vehicle> vehicles, TaskSet tasks) {
+	private Solution generateInitialSolutionNaive(List<Vehicle> vehicles, TaskSet tasks) {
 
 		ArrayList<Task> pickupTaskList = new ArrayList<Task>();
 		ArrayList<Task> deliveryTaskList = new ArrayList<Task>();
@@ -256,11 +273,11 @@ public class SLS {
 		// stores the action of the vehicle
 		HashMap<Vehicle, ArrayList<TaskWrapper>> simpleVehicleAgendas = new HashMap<Vehicle, ArrayList<TaskWrapper>>();
 
-		//INITIALIZE 
+		// INITIALIZE
 		for (Vehicle v : vehicles) {
 			simpleVehicleAgendas.put(v, new ArrayList<TaskWrapper>());
 		}
-		
+
 		while (!pickupTaskList.isEmpty()) {
 
 			for (Vehicle vehicle : vehicles) {
@@ -290,7 +307,7 @@ public class SLS {
 		return new Solution(simpleVehicleAgendas);
 	}
 
-	private Solution selectInitialSolutionGreedy(List<Vehicle> vehicles, TaskSet tasks) {
+	private Solution generateInitialSolutionGreedy(List<Vehicle> vehicles, TaskSet tasks) {
 
 		ArrayList<Task> pickupTaskList = new ArrayList<Task>();
 		ArrayList<Task> deliveryTaskList = new ArrayList<Task>();
@@ -317,7 +334,7 @@ public class SLS {
 					break;
 				}
 			}
-			
+
 			if (vehicle == null) {
 				throw new IllegalArgumentException("There is a task that cannot be carried by any of the vehicle.");
 			}
@@ -354,12 +371,12 @@ public class SLS {
 				vehicles.remove(v);
 			}
 		}
-		
+
 		Random rand = new Random();
 		Vehicle chosenVehicle = vehicles.get(rand.nextInt(vehicles.size()));
 
 		solutions.addAll(this.transferAllTasksToAllVehicles(chosenVehicle, oldSolution.getSimpleVehicleAgendas()));
-		
+
 		return solutions;
 	}
 
@@ -370,13 +387,14 @@ public class SLS {
 	 *         generated, can be either the current solution, the optimal from the
 	 *         set of neighbors, or a random solution from the set of neighbors
 	 */
-	private Solution localChoice(ArrayList<Solution> neighbors, Solution localMin, Solution homeSolution) {
+	private Solution localChoice(ArrayList<Solution> neighbors, Solution localMin,
+			Solution solutionGeneratingNeighbors) {
 		Random rand = new Random();
 		double x = rand.nextDouble();
 
-		/* 
-		 * If the same local minimum is found MAX_REPEAT times in a row,
-		 * a neighbor is randomly selected
+		/*
+		 * If the same local minimum is found MAX_REPEAT times in a row, a neighbor is
+		 * randomly selected
 		 */
 		if (repeatCount >= this.MAX_REPEAT) {
 			int y = rand.nextInt(neighbors.size());
@@ -391,7 +409,7 @@ public class SLS {
 			// if random number is between P_lower and P_upper, return the old
 			// solution
 			else if (x <= P_UPPER) {
-				return homeSolution;
+				return solutionGeneratingNeighbors;
 			}
 			// if the random number is above P_upper, return a random neighbor
 			else {
@@ -404,23 +422,18 @@ public class SLS {
 	/**
 	 * 
 	 * @param solutions
-	 * @return the first solution in *solutions* whose total cost is the lowest
-	 *         amongst the ones presented in *solutions*. If *solutions* is empty,
-	 *         return null
+	 * @return return a SolutionList with the solutions in *solutions* with the lowest total cost
 	 */
-	private Solution getLocalMin(ArrayList<Solution> solutions) {
-		double localMinSolutionTotalCost = Double.POSITIVE_INFINITY;
-		Solution localMinSolution = null;
+	private SolutionList getLocalMin(ArrayList<Solution> solutions, int amountOfLocalMin) {
 
-		// Find the solution amongst solutions with the lowest total cost
-		for (Solution solution : solutions) {
-			double solutionTotalCost = solution.totalCost;
-			if (solutionTotalCost < localMinSolutionTotalCost) {
-				localMinSolution = solution;
-				localMinSolutionTotalCost = solutionTotalCost;
-			}
+		// Initialize
+		SolutionList localMinSolutions = new SolutionList(amountOfLocalMin);
+	
+		// Find the solutions amongst *solutions* with the lowest total cost
+		for (Solution s : solutions) {
+			localMinSolutions.add(s);
 		}
-		return localMinSolution;
+		return localMinSolutions;
 	}
 
 }
